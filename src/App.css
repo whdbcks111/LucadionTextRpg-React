@@ -20,6 +20,9 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
+}
+
+* {
   font-family: 'GmarketSansMedium', 'dotum';
 }
 
@@ -38,6 +41,7 @@ body {
 }
 
 .chat-box {
+  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -68,8 +72,140 @@ body {
 }
 
 .chat-input[placeholder]:empty::after {
+  color: #aaa;
   content: attr(placeholder);
-  color: #aaa
+}
+
+.slide-menu {
+  width: 300px;
+  right: -300px;
+  position: absolute;
+  transition: right .3s;
+  height: inherit;
+  background-color: #222;
+  border-left: 1px solid #111;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  z-index: 4;
+}
+
+.slide-menu.open {
+  right: 0px;
+}
+
+.slide-menu > .title {
+  margin-top: 10px;
+  padding: 10px 5px;
+  border-bottom: 1px solid #111;
+}
+
+.slide-menu > .sub-title {
+  font-size: .9em;
+  margin: 15px 0 10px;
+}
+
+.slide-menu > .rooms {
+  display: flex;
+  flex-direction: column;
+}
+
+.room {
+  background-color: #00000036;
+  margin: 3px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  cursor: pointer;
+}
+
+.slide-menu > * {
+  margin-inline: 13px !important;
+}
+
+.slide-background {
+  position: absolute;
+  width: inherit;
+  height: inherit;
+  transition: background-color .4s;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.slide-background.open {
+  background-color: #00000077;
+  transition: background-color .4s;
+  pointer-events: all;
+}
+
+.chat-box > .ping-data {
+  width: 50vw;
+  max-width: 250px;
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background-color: #11111188;
+  padding: 5px 10px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  color: white;
+}
+
+.message-icon {
+  width: 1em;
+  height: 1em;
+  background-size: cover;
+}
+
+.user-count {
+  font-size: 0.8em;
+  color: #00ffb7;
+}
+
+.room-user-count {
+  margin-left: 10px;
+}
+
+.map-player-info {
+    font-size: 0.8em;
+    background-color: #55555511;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 5px;
+}
+
+.map-player-info > .title {
+  padding-bottom: 5px;
+}
+
+.map-player-info > .list {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9em;
+  color: lightgray;
+}
+
+.map-player-info > .list .order {
+  color: white;
+  min-width: 15px;
+  display: inline-block;
+}
+
+.ping-data > .life-data {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.ping-data .progress-container {
+  flex-grow: 1;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px 10px;
 }
 
 .chat-box > .chat-toolbar {
@@ -78,12 +214,14 @@ body {
   flex-shrink: 0;
   display: flex;
   box-sizing: border-box;
+  background-color: #282828;
 }
 
 .chat-toolbar > .chat-input {
   height: 100%;
   padding: 10px;
-  max-height: 20vh;
+  min-height: 44px;
+  max-height: 30vh;
   box-sizing: border-box;
   outline: 0;
   color: white;
@@ -91,7 +229,6 @@ body {
   flex-grow: 1;
   overflow-wrap: break-word;
   overflow-y: auto;
-  background-color: #282828;
   font-family: 'GmarketSansMedium';
 }
 
@@ -100,33 +237,161 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  line-height: 100%;
   font-weight: bolder;
   font-size: 1em;
   border: 0;
-  background-color: rgb(44, 255, 157);
+  background-color: #00ffb7;
   color: black;
+  border-radius: 5px;
+  margin: 4px;
+  height: calc(100% - 8px);
   box-sizing: border-box;
   flex-basis: 60px;
 }
 .message-area {
   width: 100%;
   display: flex;
+  overflow: hidden;
 }
 
 .message-area > .profile-box {
   width: 50px;
   height: 50px;
-  background-color: white;
-  background-size: cover;
-  border-radius: 20px;
   margin: 5px;
 }
 
-.rich-message {
+.profile-box {
+  background-color: white;
+  background-size: cover;
+  border-radius: 40%;
+  background-position: center;
+}
+
+.change-profile-btn {
+  width: 35px;
+  height: 35px;
+  background-color: #353535;
+  border-radius: 50%;
+  background-size: 23px 23px;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  right: 0;
+  bottom: 5px;
+  cursor: pointer;
+}
+
+.account-settings > .profile-box {
+  width: 100px;
+  height: 100px;
+  margin: 10px auto;
+  position: relative;
+}
+
+.message-area.chain .profile-box {
+  visibility: hidden;
+  height: 0;
+}
+
+.message-area.chain .non-profile-box {
+  margin-top: 0;
+}
+
+.message-area.chain .above-message {
+  display: none;
+}
+
+.sign-box {
+  background-color: #242424;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 55px;
+}
+
+.sign-box > input {
+  outline: none;
+  margin-block: 7px;
+  background-color: #333;
+  border: none;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 4px;
+  width: 250px;
+  color: white;
+}
+
+.sign-box > input::placeholder {
+  color: #aaa;
+}
+
+.sign-box > input.auth-code-input {
+  margin-bottom: 20px;
+}
+
+.sign-box > input[type='button'] {
+  background-color: #00ffb7;
+  color: black;
+}
+
+.sign-box > input[type='button'].google-login-btn {
+  background-color: white;
+}
+
+.google-login-btn {
+  background-repeat: no-repeat;
+  background-size: auto 60%;
+  background-position: 10px 50%;
+}
+
+.sign-box > input.send-auth-code {
+  background-color: #ccc;
+  padding: 5px;
+}
+
+input[type='button']:hover {
+  cursor: pointer;
+}
+
+.sign-box > a {
+  color: white;
+  font-size: 0.9em;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.message-component {
+  display: inline;
+}
+
+.message-component.block {
+  display: inline-block;
+}
+
+.message-component.button {
+  height: 1em;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #00ffb7;
+  color: black;
+  cursor: pointer;
+  padding: 4px 7px;
+  margin: 3px 2px;
+  border-radius: 7px;
+}
+
+.sign-box > .title {
+  align-self: center;
+  margin-bottom: 30px;
+  font-size: 1.3em;
+  color: white;
+}
+
+.message-component.embed {
+  display: block;
   padding: 5px 5px 5px 10px;
-  margin-top: 5px;
-  border-left: 3px solid #00ffb7;
+  border-left: 3px solid white;
 }
 
 .message-area > .non-profile-box {
@@ -135,7 +400,7 @@ body {
   max-width: calc(100% - 100px);
   display: flex;
   flex-direction: column;
-  font-size: 0.9em;
+  font-size: 0.8em;
   color: white;
 }
 
@@ -151,10 +416,11 @@ body {
 }
 
 .message {
-  border-radius: 10px;
+  border-radius: 7px;
   background-color: #353535;
   align-self: flex-start;
   padding: 7px 10px;
+  overflow: hidden;
 }
 
 .message, .full-message-area {
@@ -166,8 +432,8 @@ body {
 }
 
 .full-message-area {
-  color: #eee;
-  font-size: 0.95em;
+  color: white;
+  font-size: 0.85em;
   padding: 15px;
   overflow-y: auto;
   flex-grow: 1;
@@ -195,15 +461,65 @@ body {
 .fold-button {
   padding-top: 5px;
   color: #aaa;
+  cursor: pointer;
 }
 
 .full-toolbar {
   flex-basis: 50px;
   flex-shrink: 0;
   color: white;
-  background-color: #161616;
+  background-color: inherit;
+  border-bottom: 1px solid #111;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0px 20px;
+  padding: 5px 20px;
+}
+
+.chat-top-bar {
+  width: 100%;
+  flex-basis: 60px;
+  flex-shrink: 0;
+  display: flex;
+  box-sizing: border-box;
+  background-color: inherit;
+  align-items: center;
+  border-bottom: 1px solid #111;
+  padding: 5px 10px;
+}
+
+.chat-top-bar .room-name {
+  font-size: 1.1em;
+  flex-grow: 1;
+  padding-left: 20px;
+  color: #ccc;
+}
+
+.chat-top-bar .hamburger-btn {
+  width: 20px;
+  height: 20px;
+  background-size: cover;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.progress-container {
+  overflow: hidden;
+  margin-left: 2px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.progress-container > * {
+  height: inherit;
+  display: inline-block;
+  box-sizing: border-box;
+  transition: flex-grow .1s;
+}
+
+.progress-empty {
+  background-color: #00000036;
 }

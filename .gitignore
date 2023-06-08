@@ -49,6 +49,8 @@ private/smtp_pass.txt
 private/users.json
 private/devUUID.txt
 
+ssl/
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 

@@ -1,3 +1,4 @@
+import { Utils } from "../Internal";
 import Enum from "../util/Enum";
 
 export class AttributeType extends Enum {
@@ -19,6 +20,18 @@ export class AttributeType extends Enum {
         this.maxValue = maxValue;
         this.fixPosition = fixPos;
         this.suffix = suffix;
+    }
+
+    asSubjective(): string {
+        return Utils.asSubjective(this.displayName);
+    } 
+
+    asObjective(): string {
+        return Utils.asObjective(this.displayName);
+    }
+
+    asWith(): string {
+        return Utils.asWith(this.displayName);
     }
 
     static getAll(): AttributeType[] {

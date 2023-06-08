@@ -1,4 +1,4 @@
-import { Player, World, TradeManager } from '../Internal';
+import { Player, World, TradeManager, Entity } from '../Internal';
 
 export class Time {
     static deltaTime = 0;

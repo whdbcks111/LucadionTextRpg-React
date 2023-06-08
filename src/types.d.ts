@@ -1,3 +1,4 @@
+import { Projectile } from './modules/Internal';
 
 type CSSProperties = import('react').CSSProperties;
 type Entity = import('./modules/Internal').Entity;
@@ -60,12 +61,19 @@ export interface BlockTextComponent extends TextComponent {
     block: true;
 }
 
+export interface ImageComponent extends MessageComponent {
+    imageSource: string;
+    width: number;
+    height: number;
+}
+
 export interface EmbedTextComponent extends MessageComponent {
     embedColor: string;
 }
 
 export interface ButtonComponent extends MessageComponent {
     command: string;
+    buttonColor?: string;
 }
 
 export interface ProgressComponent extends MessageComponent {
@@ -98,13 +106,17 @@ export interface HandleChatData extends SendChatData {
 export interface ClientChatData extends SendChatData {
     profilePic?: string;
     userId: string;
+    flags?: ChatFlag[];
 }
+
+export type ChatFlag = 'dev' | 'bot' | '#1'
 
 export interface AttackOptions {
     applyAttackSpeed?: boolean;
     absoluteHit?: boolean;
     useAbuserCritical?: boolean;
     isMagicAttack?: boolean;
+    isFixedAttack?: boolean;
     isOptionedAttack?: boolean;
     onHit?: (attacker: Entity, victim: Entity) => void;
     additionalMessage?: MessageComponent;
@@ -144,6 +156,7 @@ export interface LocationPresetObject {
 export interface EventMap {
     onUpdate?: (p: Player) => void;
     onHit?: (p: Player, victim: Entity) => void;
+    onProjectileHit?: (p: Player, projectile: Projectile, victim: Entity) => void;
     onHitted?: (p: Player, attacker: Entity) => void;
 }
 
@@ -166,15 +179,18 @@ export interface PingRoomData {
 }
 
 export interface ServerPingData {
-    playerLife: number;
+    playerLife?: number;
     targetLife?: number;
-    currentRoom: string;
-    currentRoomName: string;
-    rooms: PingRoomData[];
-    profilePic: NullableString;
-    mapPlayerNames: string[];
-    roomUserCount: number;
-    totalUserCount: number;
+    currentRoom?: string;
+    currentRoomName?: string;
+    rooms?: PingRoomData[];
+    profilePic?: NullableString;
+    mapPlayerNames?: string[];
+    roomUserCount?: number;
+    totalUserCount?: number;
+    cooldowns?: [string, number][];
+    currentActionBar?: MessageComponent | null;
+    attackSpeedProgress?: number;
 }
 
 export type LoginMessage = 
@@ -195,7 +211,7 @@ export type RegisterMessage =
     'auth-code-not-match' |
     'auth-code-expired' |
     'email-already-registered' |
-    'nickname-already-exists';
+    'nickname-cannot-use';
 
 export type CommandHanlder = (
     chatData: HandleChatData, 
@@ -244,6 +260,7 @@ export interface OptionPresetObject {
     name: string;
     getDescription: (option: Option) => string;
     onHit?: (option: Option, self: Entity, victim: Entity) => void;
+    onProjectileHit?: (option: Option, projectile: Projectile, victim: Entity) => void;
     onHitted?: (option: Option, self: Entity, attacker: Entity) => void;
     onUpdate?: (option: Option, self: Entity) => void;
 }
@@ -254,6 +271,11 @@ export interface ProjectilePresetObject {
     onHit?: (projectile: Projectile, victim: LivingEntity) => void;
     attributes: { [key: string]: number };
 }
+
+export type SpellMap = {
+    [key: string]: SpellMap | SpellAction
+}
+export type SpellAction = (p: Player) => boolean;
 
 export interface MonsterPresetObject {
     name: string;
@@ -275,6 +297,7 @@ export interface SkillPresetObject {
     name: string;
     isPassive: boolean;
     maxLevel: number;
+    constants?: ExtraObject;
     checkRealizeCondition?: (p: Player) => boolean;
     getCooldown?: (skill: Skill, p: Player) => number;
     calcValues?: (skill: Skill, p: Player) => NumberMap;

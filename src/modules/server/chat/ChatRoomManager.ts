@@ -24,26 +24,16 @@ export class ChatRoomManager {
     }
 
     static loadAll() {
-        if(!fs.existsSync(Utils.SAVE_PATH + 'rooms/')) fs.mkdirSync(Utils.SAVE_PATH + 'rooms/', { recursive: true });
-        let files = fs.readdirSync(Utils.SAVE_PATH + 'rooms/');
+        let files = fs.readdirSync(Utils.SAVE_PATH + Utils.ROOMS_PATH);
         for(let file of files) {
             ChatRoom.loadRoom(file.split('.')[0]);
         }
+        return true;
     }
 
-    static saveAll() {
-        const save = () => {
-            if(!fs.existsSync(Utils.SAVE_PATH + 'rooms/')) fs.mkdirSync(Utils.SAVE_PATH + 'rooms/', { recursive: true });
-            ChatRoomManager.rooms.forEach(r => {
-                r.saveData();
-            });
+    static async saveAll() {
+        for(const r of ChatRoomManager.rooms) {
+            await r.saveData();
         }
-        
-        if(!fs.existsSync(Utils.TMP_PATH)) fs.mkdirSync(Utils.TMP_PATH, { recursive: true });
-        if(fs.existsSync(Utils.SAVE_PATH + 'rooms/')) fs.rename(Utils.SAVE_PATH + 'rooms/', Utils.TMP_PATH + 'rooms', err => {
-            if(err) console.log(err);
-            save();
-        });
-        else save();
     }
 }

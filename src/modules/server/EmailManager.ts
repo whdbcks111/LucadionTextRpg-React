@@ -1,19 +1,18 @@
 import nodemailer from 'nodemailer';
-import { Config } from '../Internal';
 
 const mailTransport = nodemailer.createTransport({
-    service: Config.get('smtp-service'),
+    service: process.env.SMTP_SERVICE,
     auth: {
-        user: Config.get('smtp-email'),
-        pass: Config.get('smtp-password')
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD
     }
 });
 
 export function sendMail(to: string, subject: string, contentHtml: string) {
     if(to.trim().length === 0) return false;
     mailTransport.sendMail({
-        from: `"Lucadion RPG" <${Config.get('smtp-email')}>`,
-        to: to,
+        from: `"Lucadion RPG" <${process.env.SMTP_EMAIL}>`,
+        to,
         subject: '[Lucadion RPG] ' + subject,
         html: contentHtml
     });

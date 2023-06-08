@@ -1,7 +1,8 @@
-import { ClientChatData, ExtraObject } from '../../../types';
+import { ClientChatData, ExtraObject, MessageComponent } from '../../../types';
 import { chat, ChatManager, ChatRoomManager, User } from '../../Internal';
 import { Utils } from '../../util/Utils';
 import fs from 'graceful-fs';
+import { saveJson } from '../../util/JsonDataBase';
  
 export class ChatRoom {
     readonly id: string;
@@ -27,7 +28,7 @@ export class ChatRoom {
         this.chatList.push(chat);
         ChatManager.chatExistanceSet.add(chat.chatId);
 
-        if(this.chatList.length > 50) this.chatList = this.chatList.slice(-50);
+        if(this.chatList.length > 500) this.chatList = this.chatList.slice(-500);
     }
 
     removeChat(chatId: string) {
@@ -41,6 +42,17 @@ export class ChatRoom {
         chat.in(this.id).emit('remove-chats', chatIds);
     }
 
+    editChat(chatId: string, to: MessageComponent) {
+        this.editChats({ [chatId]: to });
+    }
+
+    editChats(editMap: { [key: string]: MessageComponent }) {
+        this.chatList.forEach(c => {
+            if(c.chatId in editMap) c.message = editMap[c.chatId];
+        });
+        chat.in(this.id).emit('edit-chats', editMap);
+    }
+
     toDataObj(): ExtraObject {
         return {
             ...this,
@@ -48,15 +60,18 @@ export class ChatRoom {
         };
     }
 
-    saveData() {
-        fs.writeFile(`${Utils.SAVE_PATH}rooms/${this.id}.json`, JSON.stringify(this.toDataObj(), null, 4), () => {});
+    async saveData() {
+        await saveJson(`${Utils.SAVE_PATH + Utils.ROOMS_PATH}${this.id}.json`, 
+            this.toDataObj());
     }
 
     static fromDataObj(data: ExtraObject) {
         if(!data) return null;
         let newRoom = new ChatRoom(data.id ?? Utils.randomString(20), data.name ?? '');
 
-        if(data.users) newRoom.users = new Set(data.users.map((uid: string) => User.getUser(uid)));
+        if(data.users) newRoom.users = new Set(data.users
+            .map((uid: string) => User.getUser(uid))
+            .filter((u: User | undefined) => u instanceof User));
         if(data.chatList) newRoom.chatList = data.chatList;
         if(data.isOpenRoom) newRoom.isOpenRoom = data.isOpenRoom;
 
@@ -64,7 +79,7 @@ export class ChatRoom {
     }
     
     static loadRoom(id: string) {
-        let data = fs.readFileSync(`${Utils.SAVE_PATH}rooms/${id}.json`).toString();
+        let data = fs.readFileSync(`${Utils.SAVE_PATH + Utils.ROOMS_PATH}${id}.json`).toString();
         let newRoom = ChatRoom.fromDataObj(JSON.parse(data));
         if(newRoom) ChatRoomManager.registerRoom(newRoom);
     }

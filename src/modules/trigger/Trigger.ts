@@ -1,5 +1,5 @@
 import { EventMap, ExtraObject } from "../../types";
-import { Entity, LivingEntity, OptionPreset, Player, Time } from "../Internal"
+import { Entity, LivingEntity, OptionPreset, Player, Projectile, Time } from "../Internal"
 
 export class Trigger {
 
@@ -11,6 +11,10 @@ export class Trigger {
 
     onUpdate(self: Player) {
         if(this.events.onUpdate) this.events.onUpdate(self);
+    }
+
+    onProjectileHit(self: Player, projectile: Projectile, victim: Entity) {
+        if(this.events.onProjectileHit) this.events.onProjectileHit(self, projectile, victim);
     }
 
     onHit(self: Player, victim: Entity) {
@@ -63,6 +67,10 @@ export class Option {
 
     onUpdate(self: Entity) {
         if(this.preset?.onUpdate) this.preset.onUpdate(this, self);
+    }
+
+    onProjectileHit(projectile: Projectile, victim: Entity) {
+        if(this.preset?.onProjectileHit) this.preset.onProjectileHit(this, projectile, victim);
     }
 
     equals(other: Option) {

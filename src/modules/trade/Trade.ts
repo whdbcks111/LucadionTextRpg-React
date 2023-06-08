@@ -122,10 +122,10 @@ export class TradePlayer {
     }
 
     subtractItem(index: number, count = 1) {
-        let itemStack = this.items.contents[index];
+        let itemStack = this.items.getItemStack(index);
         if (!itemStack) return false;
         this.player.inventory.addItem(itemStack.item, Math.min(count, itemStack.count));
-        this.player.inventory.addItemCount(index, -count);
+        this.items.addItemCount(index, -count);
         return true;
     }
 }

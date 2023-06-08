@@ -304,8 +304,107 @@ export class World {
         }),
         new Location('코르코르 늪 - 7', -2000, 7, 2300, {
             zoneType: ZoneType.NEUTRAL,
-            getMovable: loc => ['코르코르 늪 - 4'],
-            objects: Utils.shuffle(Utils.repeat(() => Monster.fromName('포즈네 플라워'), 7))
+            getMovable: loc => ['코르코르 늪 - 4', '코르코르 늪 - 8'],
+            objects: Utils.shuffle(Utils.repeat(() => Monster.fromName('포즈네 플라워'), 4))
+        }),
+        new Location('코르코르 늪 - 8', -2200, 7, 2500, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable(loc) {
+                let list = ['코르코르 늪 - 7'];
+                let door = loc.objects?.find(o => o instanceof Resource && o.name === '오염된 꽃봉오리');
+                if (door && !door.isAlive) list.push('폴루토스 던전 - 1');
+                return list;
+            },
+            objects: (Utils.repeat(() => Monster.fromName('포즈네 플라워'), 7) as Lootable[])
+                .concat([Resource.fromName('오염된 꽃봉오리')])
+        }),
+        new Location('폴루토스 던전 - 1', -2400, 7, 2700, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable(loc) {
+                let list = ['코르코르 늪 - 8'];
+                let keeper = loc.objects[0];
+                if (keeper && !keeper.isAlive) list.push('폴루토스 던전 - 2');
+                return list;
+            },
+            objects: [Monster.fromName('폴루토스의 하수인, 기간티하스')]
+        }),
+        new Location('폴루토스 던전 - 2', -2500, -10, 2800, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => {
+                let list = ['폴루토스 던전 - 1', '폴루토스 던전 - 3'];
+                let thorns = loc.terrains.filter(o => o instanceof Terrain && o.id === 'thorn_of_despair');
+                if (thorns.every(thorn => thorn.isAlreadyChecked)) list.push('폴루토스 던전 - 수상한 상점');
+                return list;
+            },
+            terrains: Utils.repeat(() => Terrain.fromId('thorn_of_despair'), 5),
+            objects: Utils.repeat<Monster>(() => Monster.fromName('하이펜타닉 골렘'), 3)
+        }),
+        new Location('폴루토스 던전 - 3', -2500, -15, 3000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 2', '폴루토스 던전 - 4', '폴루토스 던전 - 5'],
+            objects: Utils.repeat<Monster>(() => Monster.fromName('하이펜타닉 골렘'), 4)
+        }),
+        new Location('폴루토스 던전 - 4', -2500, -25, 3300, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 3'],
+            objects: Utils.repeat<Monster>(() => Monster.fromName('메카닉 크로우'), 4)
+        }),
+        new Location('폴루토스 던전 - 5', -2600, -20, 3300, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 3', '폴루토스 던전 - 6'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('메카닉 크로우'), 3)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 3)))
+        }),
+        new Location('폴루토스 던전 - 6', -2800, -37, 3300, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 5'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('메카닉 크로우'), 3)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 5)))
+        }),
+        new Location('폴루토스 던전 - 수상한 상점', -2550, -15, 2800, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 2'],
+            npcs: [
+                new Npc('수상한 골렘 상인', [
+                    npc => {
+                        if(!npc.target) return;
+                        if(npc.target.extras.shopGolem) return;
+                        npc.target.extras.shopGolem = true;
+                        npc.say('안녕하다. 나는 폴루토스 님의 명을 받아 이곳에서 물건을 팔고 있는 골렘이다. ]');
+                        npc.choices = [
+                            new NpcChoice('왜 폴루토스라는 사람은 던전을 만들어놓고 물건이나 파는거야?', 1),
+                            new NpcChoice('그렇군.', 2)
+                        ];
+                    },
+                     
+                    npc => {
+                        npc.say('그것은 나도 모른다. 진실은 폴루토스 님만 아실 것이다.');
+                    },
+                    npc => {
+                        npc.say('너처럼 빠르게 수긍하는 인간은 드물다. 위대한 폴루토스님의 뜻이 궁금하지 않은것인가.');
+                        npc.choices = [
+                            new NpcChoice('그건...', 3),
+                            new NpcChoice('...', 4)
+                        ];
+                    },
+                    npc => {
+                        npc.say(`'이 세계는 고작 게임이기 때문'이라고 생각하는 것인가?`);
+                        npc.choices = [
+                            new NpcChoice('...!', 5)
+                        ];
+                    },
+                    npc => {
+                        npc.say('아무 말도 못하는것이군. 알겠다. 더이상 묻지 않겠다.');
+                    },
+                    npc => {
+                        npc.say('이 세계가 허상이라는 것은 폴루토스 님도 인지하고 있다.\n' + 
+                            '하지만 너는 그러지 않을 거라는 보장은 어디있는 것인가?');
+                        npc.choices = [
+                            new NpcChoice('...', 4)
+                        ];
+                    }
+                ])
+            ]
         }),
         new Location('마계 - 망자의 골짜기 - 1', 0, 0, 0, {
             regionType: RegionType.DEVILDOM,
@@ -886,7 +985,8 @@ export class World {
         }),
         new Location('대련장', 0, 0, 0, {
             getMovable: loc => ['새터스 마을'],
-            objects: Utils.repeat(() => Monster.fromName('허수아비'), 10),
+            objects: Utils.repeat(() => Monster.fromName('허수아비'), 10)
+                .concat(Utils.repeat(() => Monster.fromName('연습용 인형'), 4)),
             zoneType: ZoneType.NORMAL
         }),
         new Location('해턴의 잡화상점', 35, 5, 35, {
@@ -1027,9 +1127,9 @@ export class World {
         }),
         new Location('옴페니 화산 지역 - 4', 200, 10, 630, {
             zoneType: ZoneType.NEUTRAL,
-            getMovable: function () {
+            getMovable(loc) {
                 let list = ['옴페니 화산 지역 - 코어', '옴페니 화산 지역 - 5'];
-                let door = this.objects?.find(o => o instanceof Resource && o.name === '오염된 강철문');
+                let door = loc.objects?.find(o => o instanceof Resource && o.name === '오염된 강철문');
                 if (door && !door.isAlive) list.push('인모르투 던전 - 1');
                 return list;
             },

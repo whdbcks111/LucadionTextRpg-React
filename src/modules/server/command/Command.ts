@@ -52,12 +52,12 @@ export class Command {
             player.sendMessage(ComponentBuilder.embed([
                 ComponentBuilder.text(player.isLoggedIn ?
                     '사망한 상태에선 사용할 수 없는 명령어입니다.\n' +
-                    `부활까지 ${new TimeFormat(player.deadTime * 1000)
+                    `부활까지 ${new TimeFormat(Math.max(player.deadTime, 0) * 1000)
                         .useUntilDays()
                         .format('d일 h시간 m분 s초')
                         .replace(/^0일 /, '')
                         .replace(/^0시간 /, '')
-                        .replace(/^0분/, '')
+                        .replace(/^0분 /, '')
                     } 남았습니다.` :
                     '로그아웃된 상태에선 사용할 수 없는 명령어입니다.')
             ], 'red'));

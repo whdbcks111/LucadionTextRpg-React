@@ -1,6 +1,6 @@
 import { ExtraObject, NullableString } from "../../types";
 import Enum from "../util/Enum";
-import { Time, Player, AttributeType, LivingEntity, World, TimeFormat, Utils } from "../Internal";
+import { Time, Player, AttributeType, LivingEntity, World, TimeFormat } from "../Internal";
 import { ComponentBuilder } from "../server/chat/ComponentBuilder";
 
 export class Effect {
@@ -37,7 +37,9 @@ export class Effect {
     }
 
     static getDescriptionMessage(type: EffectType, level: number) {
-        return ComponentBuilder.text(`Lv.${level} ${type.displayName}`, { color: 'plum' });
+        return ComponentBuilder.text(`Lv.${level} ${type.displayName}`, { 
+            color: type.isDebuff ? '#C836CB' : '#5EC1FA' 
+        });
     }
 
     toString() {
@@ -208,14 +210,12 @@ export class EffectType extends Enum {
 
     static SILENCE =
         new EffectType('silence', '침묵', (effect, living) => {
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = effect.type.displayName + '에 걸린 상태입니다.';
+            living.setCannotUseSkill(effect.type.displayName + '에 걸린 상태입니다.');
         }).setDebuff();
 
     static BIND =
         new EffectType('bind', '속박', (effect, living) => {
-            living.canMove = false;
-            living.cannotUseSkillMessage = effect.type.displayName + '에 걸린 상태입니다.';
+            living.setCannotUseSkill(effect.type.displayName + '에 걸린 상태입니다.');
         }).setDebuff();
 
     static INVULNERABLE =
@@ -225,19 +225,21 @@ export class EffectType extends Enum {
 
     static INVISIBLE =
         new EffectType('invisible', '투명화', (effect, living) => {
-            living.isVisible = false;
+            living.setInvisible();
         });
 
     static EXPOSE =
         new EffectType('expose', '발각됨', (effect, living) => {
             let invisible = living.getEffect(EffectType.INVISIBLE);
-            if(invisible && invisible.level <= effect.level) living.removeEffect(EffectType.INVISIBLE);
-        }).setDebuff();
+            if(invisible && invisible.level <= effect.level) {
+                living.removeEffect(EffectType.INVISIBLE);
+                if(living instanceof Player) living.sendRawMessage('[ 발각되었다! ]');
+            }
+        }).setDebuff().setPriority(1);
 
     static ABYSS =
         new EffectType('abyss', '심연', (effect, living) => {
-            living.canAttack = false;
-            living.cannotAttackMessage = '심연에 중독된 상태입니다.';
+            living.setCannotAttack('심연에 중독된 상태입니다.');
             if(!effect.extras.originalLife) effect.extras.originalLife = living.life;
             living.life = Math.max(1, effect.extras.originalLife * (effect.duration / effect.maxDuration));
         }).setOnFinish((effect, living) => {
@@ -246,12 +248,11 @@ export class EffectType extends Enum {
             living.teleport(World.FIRST_CLASS_CHANGE.name ?? living.location);
             living.sendRawMessage(`[ ${living.getName()}님, 사망하셨습니다. \n` +
                 '... 하지만 곧 깊은 심연에서 눈을 뜹니다. ]');
-        });
+        }).setPriority(Infinity);
 
     static SECOND_ABYSS =
         new EffectType('secondAbyss', '2번째 심연', (effect, living) => {
-            living.canAttack = false;
-            living.cannotAttackMessage = '심연에 심취한 상태입니다.';
+            living.setCannotAttack('심연에 심취한 상태입니다.');
             if(!effect.extras.originalLife) effect.extras.originalLife = living.life;
             living.life = Math.max(1, effect.extras.originalLife * (effect.duration / effect.maxDuration));
         }).setOnFinish((effect, living) => {
@@ -260,109 +261,85 @@ export class EffectType extends Enum {
             living.teleport(World.SECOND_CLASS_CHANGE.name ?? living.location);
             living.sendRawMessage(`[ ${living.getName()}님, 사망하셨습니다. \n` +
                 '.... 그렇기에.. 곧 깊은 심연에서 눈을 뜹니다 . ]');
-        });
+        }).setPriority(Infinity);
 
     static STUN =
         new EffectType('stun', '기절', (effect, living) => {
             let message = effect.type.displayName + '한 상태입니다.';
-            living.canMove = false;
-            living.cannotMoveMessage = message;
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canUseItem = false;
-            living.cannotUseItemMessage = message;
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = message;
+            living.setCannotMove(message);
+            living.setCannotAttack(message);
+            living.setCannotUseItem(message);
+            living.setCannotUseSkill(message);
         }).setDebuff();
 
     static OVERMASTER =
         new EffectType('overmaster', '제압', (effect, living) => {
             let message = effect.type.displayName + '된 상태입니다.';
-            living.canMove = false;
-            living.cannotMoveMessage = message;
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canUseItem = false;
-            living.cannotUseItemMessage = message;
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = message;
+            living.setCannotMove(message);
+            living.setCannotAttack(message);
+            living.setCannotUseItem(message);
+            living.setCannotUseSkill(message);
         }).setDebuff();
 
     static NAUSEA =
         new EffectType('nausea', '멀미', (effect, living) => {
             let message = effect.type.displayName + '에 걸린 상태입니다.';
             if(Math.random() < 0.5 + 0.05 * effect.level) {
-                living.canAttack = false;
-                living.cannotAttackMessage = message;
+                living.setCannotAttack(message);
             }
-            living.canUseItem = false;
-            living.cannotUseItemMessage = message;
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = message;
+            living.setCannotUseItem(message);
+            living.setCannotUseSkill(message);
         }).setDebuff();
 
     static BLINDNESS =
         new EffectType('blindness', '실명', (effect, living) => {
             let message = effect.type.displayName + '에 걸린 상태입니다.';
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canAvoid = false;
+            living.setCannotAvoid();
+            living.setCannotAttack(message);
         }).setDebuff();
 
     static AIRBORNE =
         new EffectType('airborne', '공중에 뜸', (effect, living) => {
             let message = '공중에 뜬 상태입니다.';
-            living.canMove = false;
-            living.cannotMoveMessage = message;
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canUseItem = false;
-            living.cannotUseItemMessage = message;
+            living.setCannotMove(message);
+            living.setCannotAttack(message);
+            living.setCannotUseItem(message);
         }).setDebuff();
 
     static CHARM =
         new EffectType('charm', '매혹', (effect, living) => {
             let message = '매혹된 상태입니다.';
-            living.canAvoid = false;
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canUseItem = false;
-            living.cannotUseItemMessage = message;
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = message;
+            living.setCannotAvoid();
+            living.setCannotAttack(message);
+            living.setCannotUseItem(message);
+            living.setCannotUseSkill(message);
         }).setDebuff();
 
     static FEAR =
         new EffectType('fear', '공포', (effect, living) => {
             let message = effect.type.displayName + '에 걸린 상태입니다.';
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = message;
-            living.canAvoid = false;
+            living.setCannotAvoid();
+            living.setCannotAttack(message);
+            living.setCannotUseSkill(message);
             living.attribute.multiplyValue(AttributeType.MOVE_SPEED, Math.pow(0.9, effect.level));
         }).setDebuff();
 
     static SLEEP =
         new EffectType('sleep', '수면', (effect, living) => {
             let message = effect.type.displayName + '에 걸린 상태입니다.';
-            living.canMove = false;
-            living.cannotMoveMessage = message;
-            living.canAttack = false;
-            living.cannotAttackMessage = message;
-            living.canUseItem = false;
-            living.cannotUseItemMessage = message;
-            living.canUseSkill = false;
-            living.cannotUseSkillMessage = message;
+            living.setCannotMove(message);
+            living.setCannotAttack(message);
+            living.setCannotUseItem(message);
+            living.setCannotUseSkill(message);
         }).setDebuff();
 
     static FIRE =
         new EffectType('fire', '화염', (effect, living) => {
-            living.damage(Time.deltaTime * effect.level * Math.min(0.005 * living.maxLife, 50), effect.caster);
+            living.damage(Time.deltaTime * Math.pow(effect.level, 1.05) * Math.min(0.005 * living.maxLife, 50), effect.caster);
 
             let now = Date.now();
             if (living instanceof Player && now - (effect.extras.latestSend ?? 0) > 1000 * 5) {
-                living.sendRawMessage(`[ ${living.getName()}님, 출혈되고 있습니다. ]`);
+                living.sendRawMessage(`[ ${living.getName()}님, 불타고 있습니다. ]`);
                 effect.extras.latestSend = now;
             }
         }).setDebuff();

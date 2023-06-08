@@ -1,7 +1,8 @@
 import { ExtraObject, NullableString } from "../../types";
-import fs from 'graceful-fs';
 import { ChatRoomManager } from "./chat/ChatRoomManager";
-import { Utils } from "../Internal";
+import { Player, Utils } from "../Internal";
+import { saveJson } from '../util/JsonDataBase';
+import fs from 'graceful-fs';
 
 const cache: { [key: string]: User | undefined } = {};
 const tokenCache: { [key: string]: User | undefined } = {};
@@ -18,6 +19,7 @@ export class User {
     tokenExpirationDate: number;
     profilePic: NullableString;
     currentRoom: string;
+    muteExpirationDate = 0;
 
     constructor(uid: string, email: string, passwordHash: string, salt: string, 
         token: NullableString, tokenExpirationDate: number, profilePic: NullableString = null, currentRoom: NullableString = null) {
@@ -31,6 +33,10 @@ export class User {
         this.currentRoom = currentRoom ?? uid;
     }
 
+    mute(time: number) {
+        this.muteExpirationDate = Date.now() + time * 1000;
+    }
+
     joinRoom(id: string) {
         let room = ChatRoomManager.getRoom(id);
         if(room) room.users.add(this);
@@ -40,14 +46,23 @@ export class User {
         return ChatRoomManager.rooms.filter(r => r.isOpenRoom || r.users.has(this));
     }
 
+    get room() {
+        return ChatRoomManager.getRoom(this.currentRoom);
+    }
+
+    get player() {
+        return Player.getPlayerByUid(this.uid);
+    }
+
     toDataObj(): ExtraObject {
         return {
             ...this
         };
     }
 
-    saveData() {
-        fs.writeFile(`${Utils.SAVE_PATH}users/${this.uid}.json`, JSON.stringify(this.toDataObj(), null, 4), () => {});
+    async saveData() {
+        await saveJson(`${Utils.SAVE_PATH + Utils.USERS_PATH}${this.uid}.json`, 
+            this.toDataObj());
     }
 
     static getUserByToken(token: string) {
@@ -73,32 +88,26 @@ export class User {
     }
     
     static loadUser(uid: string) {
-        let data = fs.readFileSync(`${Utils.SAVE_PATH}users/${uid}.json`).toString();
-        let newUser = User.fromDataObj(JSON.parse(data));
-        if(newUser) User.registerUser(newUser);
-    }
-
-    static loadAll() {
-        if(!fs.existsSync(Utils.SAVE_PATH + 'users/')) fs.mkdirSync(Utils.SAVE_PATH + 'users/', { recursive: true });
-        let files = fs.readdirSync(Utils.SAVE_PATH + 'users/');
-        for(let file of files) {
-            User.loadUser(file.split('.')[0]);
+        let data = fs.readFileSync(`${Utils.SAVE_PATH + Utils.USERS_PATH}${uid}.json`).toString();
+        try {
+            let newUser = User.fromDataObj(JSON.parse(data));
+            if(newUser) User.registerUser(newUser);
+        } catch(e) {
+            console.log(data);
         }
     }
 
-    static saveAll() {
-        const save = () => {
-            if(!fs.existsSync(Utils.SAVE_PATH + 'users/')) fs.mkdirSync(Utils.SAVE_PATH + 'users/', { recursive: true });
-            User.users.forEach(u => {
-                u.saveData();
-            })
-        };
+    static loadAll() {
+        let files = fs.readdirSync(Utils.SAVE_PATH + Utils.USERS_PATH);
+        for(let file of files) {
+            User.loadUser(file.split('.')[0]);
+        }
+        return true;
+    }
 
-        if(!fs.existsSync(Utils.TMP_PATH)) fs.mkdirSync(Utils.TMP_PATH, { recursive: true });
-        if(fs.existsSync(Utils.SAVE_PATH + 'users/')) fs.rename(Utils.SAVE_PATH + 'users/', Utils.TMP_PATH + 'users', err => {
-            if(err) console.log(err);
-            save();
-        });
-        else save();
+    static async saveAll() {
+        for(const u of User.users) {
+            await u.saveData();
+        }
     }
 }

@@ -25,6 +25,10 @@ export class ItemStack {
         };
     }
 
+    toString() {
+        return this.item.getName();
+    }
+
     static fromDataObj(obj: ExtraObject) {
         if(!obj) return null;
         return new ItemStack(Item.fromDataObj(obj.item), obj.count);
@@ -64,6 +68,10 @@ export class Item {
         this.extras = JSON.parse(JSON.stringify(preset.extras ?? {}));
         this.createdBy = null;
         this.requiredLevel = preset.requiredLevel ?? null;
+    }
+
+    toString() {
+        return this.getName();
     }
 
     toDataObj() {
@@ -174,12 +182,12 @@ export class Item {
     }
 
     getName() {
-        return this.displayName ?? this.name;
+        return `[${this.type}] ${(this.createdBy ? '*' : '') + (this.displayName ?? this.name)}`;
     }
 
     getDisplayName(hideDurability = false) {
         return ComponentBuilder.message([
-            ComponentBuilder.text(`[${this.type}] ${(this.createdBy ? '*' : '') + this.getName()}`),
+            ComponentBuilder.text(this.getName()),
             (!hideDurability && this.durability && this.maxDurability && this.durability > 0 ?
                 ComponentBuilder.message([
                     ComponentBuilder.text('  '),
@@ -216,12 +224,14 @@ export class Item {
                 owner: player,
                 attributes: {
                     moveSpeed: player.attribute.getValue(AttributeType.PROJECTILE_SPEED),
-                    attack: player.attribute.getValue(AttributeType.RANGE_ATTACK)
+                    attack: player.attribute.getValue(AttributeType.RANGE_ATTACK),
+                    defendPenetrate: player.attribute.getValue(AttributeType.DEFEND_PENETRATE),
                 }
             });
             arrowItem.attributeModifiers.forEach(modifier => {
                 arrow.attribute.addModifier(modifier);
-            })
+            });
+            arrow.attribute.setCurrentToDefault();
             options.applyAttackSpeed = true;
             options.useAbuserCritical = true;
             if (player.slot.hand?.durability) player.slot.hand.durability--;

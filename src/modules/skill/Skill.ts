@@ -67,31 +67,43 @@ export class Skill {
         return ComponentBuilder.message([
             ComponentBuilder.text(`[ 스킬 [ ${this.name} ] 의 정보입니다. ]`),
             ComponentBuilder.embed([ComponentBuilder.hidden([
-                ComponentBuilder.text('타입', { width: '60px' }),
+                ComponentBuilder.blockText('타입', { width: '8em' }),
                 ComponentBuilder.text(`${this.isPassive ? '패시브' : '액티브'} 스킬\n`),
-                ComponentBuilder.text('레벨', { width: '60px' }),
+                ComponentBuilder.blockText('레벨', { width: '8em' }),
                 ComponentBuilder.text(`${this.level}  /${this.maxLevel}\n`),
-                ComponentBuilder.text('숙련도', { width: '60px' }),
+                ComponentBuilder.blockText('숙련도', { width: '8em' }),
                 ComponentBuilder.progressBar(this.prof, this.maxProf, 'percent'),
                 ComponentBuilder.text('\n'),
-                ComponentBuilder.text('재사용 대기시간', { width: '60px' }),
+                ComponentBuilder.blockText('재사용 대기시간', { width: '8em' }),
                 ComponentBuilder.text(new TimeFormat(this.getCooldown(player) * 1000)
                     .useUntilDays()
                     .format('d일 h시간 m분 s초')
                     .replace(/^0일 /, '')
                     .replace(/^0시간 /, '')
-                    .replace(/^0분/, '')),
+                    .replace(/^0분 /, '')),
                 ComponentBuilder.text((remainCooldown > 0 ?
                     ' (남은 시간 ' + remainCooldown.toFixed(1) + '초)' : '')),
                 ComponentBuilder.text((this.isRunning ? ' (작동 중)': '') + '\n'),
-                ComponentBuilder.text('소모', { width: '60px' }),
+                ComponentBuilder.blockText('소모', { width: '8em' }),
                 ComponentBuilder.text(`${this.getCost(player)}\n`),
-                ComponentBuilder.text('발동조건', { width: '60px' }),
+                ComponentBuilder.blockText('발동조건', { width: '8em' }),
                 ComponentBuilder.text(`${this.getCondition(player)}\n\n`),
-                ComponentBuilder.text('[ 설명 ]', { width: '60px' }),
-                ComponentBuilder.text(`${this.getDescription(player)}`, { paddingLeft: '10px' }),
+                ComponentBuilder.blockText('[ 설명 ]', { width: '8em' }),
+                ComponentBuilder.newLine(),
+                ComponentBuilder.blockText('', {
+                    margin: '5px',
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    backgroundColor: '#00000033'
+                }, [
+                    this.getDescription(player)
+                ])
             ])])
         ]);
+    }
+
+    getConstant(key: string, defaultValue?: any) {
+        return this.preset?.constants ? this.preset.constants[key] : defaultValue;
     }
 
     getCooldown(player: Player) {
@@ -142,14 +154,14 @@ export class Skill {
         return Math.max(this.getCooldown(player) - (Date.now() - this.latestFinish) / 1000, 0);
     }
 
-    setRemainCoooldown(player: Player, ms: number) {
-        this.latestFinish = Date.now() + Math.min(0, ms - this.getCooldown(player));
+    setRemainCooldown(player: Player, sec: number) {
+        this.latestFinish = Date.now() + Math.min(0, (sec - this.getCooldown(player)) * 1000);
     }
 
     runSkill(player: Player) {
-        if(this.preset?.onStart) this.preset.onStart(this, player);
         this.isRunning = true;
         this.latestStart = Date.now();
+        if(this.preset?.onStart) this.preset.onStart(this, player);
     }
 
     finish(player: Player) {

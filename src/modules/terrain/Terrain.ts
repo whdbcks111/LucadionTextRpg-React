@@ -1,5 +1,6 @@
 import { ExtraObject, NullableString } from "../../types";
 import { Item, ItemStack, Location, Player, Utils } from "../Internal";
+import { ComponentBuilder } from "../server/chat/ComponentBuilder";
 
 const cache: { [key: string]: Terrain | undefined } = {};
 
@@ -40,6 +41,9 @@ export class Terrain {
            this.latestCheck = Date.now();
            return true;
         }
+        player.sendMessage(ComponentBuilder.embed([
+            ComponentBuilder.text('[ 확인할 수 없는 지형입니다. ]')
+        ], 'red'));
         return false;
     }
 
@@ -92,6 +96,10 @@ export class Terrain {
         new Terrain('black_characters', '검은색 문자들', (terrain, p) => {
             p.sendRawMessage('[ 죽음이 두려운 자 중심에 서지 마라. 그렇지 않으면 용기를 보이되, 광휘의 힘으로 옳은 길로 가라. ]');
         }),
+        new Terrain('thorn_of_despair', '절망의 가시', (terrain, p) => {
+            p.sendRawMessage('[ 생명력을 10% 잃었습니다. ]');
+            p.damage(p.life * 0.1, p);
+        }, 30),
         new Terrain('life_shard', '라이프 샤드 (○)', (terrain, p) => {
             let loc = terrain.location;
             if(!loc) return;
@@ -99,7 +107,7 @@ export class Terrain {
                 p.sendRawMessage('[ 문은 이미 열렸다. ]');
                 return;
             }
-            let power = !!terrain.extras.power;
+            let power = terrain.extras.power;
             if (!power) {
                 p.sendRawMessage('[ 라이프 샤드가 켜졌습니다. 현재 생명력의 5%가 소멸했습니다. ]');
                 p.life *= 0.95;
@@ -109,6 +117,7 @@ export class Terrain {
                 p.sendRawMessage('[ 라이프 샤드가 꺼졌습니다. ]');
                 terrain.name = '라이프 샤드 (○)';
             }
+            terrain.extras.power = !terrain.extras.power;
             let shards = loc.terrains.filter(o => o instanceof Terrain && o.id === terrain.id);
             let answer = [false, false, false, true, false];
             let isCorrect = true;
@@ -125,6 +134,7 @@ export class Terrain {
                 setTimeout(() => {
                     shards.forEach(shard => {
                         shard.name = '라이프 샤드 (○)';
+                        shard.extras.power = false;
                     });
                 }, 30 * 1000);
             }

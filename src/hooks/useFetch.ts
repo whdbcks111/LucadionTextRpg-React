@@ -10,7 +10,6 @@ export default function useFetch(url: string, extras: RequestInit = {}) {
     };
 
     useEffect(() => {
-        console.log('fetch')
         fetch(url, extras).then(res => res.json()).then(data => setData(data));
     }, [url]);
 

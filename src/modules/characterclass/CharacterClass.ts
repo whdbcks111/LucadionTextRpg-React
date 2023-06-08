@@ -1,6 +1,6 @@
 import { AttributeType } from "../attribute/AttributeType";
 import { StatType } from "../entity/Entity";
-import { Player } from "../entity/Player";
+import { Player } from "../entity/living/player/Player";
 import { Trigger } from "../trigger/Trigger";
 import { Utils } from "../util/Utils";
 
@@ -65,70 +65,121 @@ export class CharacterClass {
                 },
             }))
             .setEnhancedClassName('광전사'),
+
         new CharacterClass('광전사', 
-            `${Utils.asSubjective(AttributeType.MAX_LIFE.displayName)} 15% 증가합니다.\n` +
+            `${Utils.asSubjective(AttributeType.MAX_LIFE.displayName)} 25% 증가합니다.\n` +
             `또한 잃은 생명력에 비례해서 ${
-                Utils.asSubjective(AttributeType.ATTACK.displayName)} 최소 20% ~ 최대 50%까지 증가합니다.`, p => {})
+                Utils.asSubjective(AttributeType.ATTACK.displayName)} 최소 20% ~ 최대 60%까지 증가합니다.`, p => {})
             .setCanChangeClass(p => (
                 p.stat.getStat(StatType.STRENGTH) >= 200 && p.stat.getStat(StatType.VITALITY) >= 200
             ))
             .setTrigger(new Trigger({
                 onUpdate(p) {
-                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.15);
-                    p.attribute.multiplyValue(AttributeType.ATTACK, 1.2 + 0.3 * ((p.maxLife - p.life) / p.maxLife));
+                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.25);
+                    p.attribute.multiplyValue(AttributeType.ATTACK, 1.2 + 0.4 * ((p.maxLife - p.life) / p.maxLife));
                 }
             })),
-        new CharacterClass('암살자', 
-            `${AttributeType.MOVE_SPEED}`, p => {
-            
-        })
-            .setTrigger(new Trigger({
 
+        new CharacterClass('암살자', 
+            `${AttributeType.MOVE_SPEED.asSubjective()} 10% 증가합니다. 또한 민첩 스탯에 비례해서 ` + 
+            `${AttributeType.DEFEND_PENETRATE.asSubjective()} 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.MOVE_SPEED, 1.1);
+                    p.attribute.addValue(AttributeType.DEFEND_PENETRATE, p.stat.getStat(StatType.AGILITY) * 5);
+                },
             }))
             .setEnhancedClassName('나이트 세이드'),
-        new CharacterClass('나이트 세이드', '', p => {})
+
+        new CharacterClass('나이트 세이드', 
+            `${AttributeType.MOVE_SPEED.asSubjective()} 16% 증가합니다. 또한 민첩 스탯에 비례해서 ` + 
+            `${AttributeType.DEFEND_PENETRATE.asSubjective()} 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.MOVE_SPEED, 1.16);
+                    p.attribute.addValue(AttributeType.DEFEND_PENETRATE, p.stat.getStat(StatType.AGILITY) * 8);
+                },
+            }))
             .setCanChangeClass(p => (
                 p.stat.getStat(StatType.STRENGTH) >= 200 && p.stat.getStat(StatType.AGILITY) >= 200
             )),
-        new CharacterClass('궁수', '', p => {
-            
-        })
-            .setTrigger(new Trigger({
 
+        new CharacterClass('궁수', `${AttributeType.RANGE_ATTACK.asSubjective()} 15% 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.RANGE_ATTACK, 1.15);
+                },
             }))
             .setEnhancedClassName('래피딕 아처'),
-        new CharacterClass('래피딕 아처', '', p => {})
+
+        new CharacterClass('래피딕 아처', `${AttributeType.PROJECTILE_SPEED.asSubjective()} 10% 증가합니다. ` + 
+            `또한 ${StatType.AGILITY.displayName} 스탯에 비례해서 ${AttributeType.RANGE_ATTACK.asSubjective()} 증가합니다.`, p => {})
             .setCanChangeClass(p => (
                 p.stat.getStat(StatType.STRENGTH) >= 200 && p.stat.getStat(StatType.SENSE) >= 200
-            )),
-        new CharacterClass('마법사', '', p => {
-            
-        })
+            ))
             .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.PROJECTILE_SPEED, 1.1);
+                    p.attribute.addValue(AttributeType.RANGE_ATTACK, p.stat.getStat(StatType.AGILITY) * 5);
+                },
+            })),
 
+        new CharacterClass('마법사', `${AttributeType.MAGIC_ATTACK.asSubjective()} 15% 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.MAGIC_ATTACK, 1.15);
+                },
             }))
             .setEnhancedClassName('그랜드 메이지'),
-        new CharacterClass('그랜드 메이지', '', p => {})
+
+        new CharacterClass('그랜드 메이지', `${AttributeType.MAGIC_ATTACK.asSubjective()} 19% 증가합니다.\n` + 
+            `또한 ${AttributeType.MAGIC_PENETRATE.asSubjective()} 30% 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.MAGIC_ATTACK, 1.19);
+                    p.attribute.multiplyValue(AttributeType.MAGIC_PENETRATE, 1.3);
+                },
+            }))
             .setCanChangeClass(p => (
                 p.stat.getStat(StatType.SPELL) >= 200 && p.stat.getStat(StatType.SENSE) >= 200
             )),
-        new CharacterClass('성기사', '', p => {
-            
-        })
+        new CharacterClass('성기사', `${StatType.VITALITY.displayName} 스탯에 비례해서 ${AttributeType.MAGIC_ATTACK.asSubjective()} 증가합니다.`, p => {})
             .setTrigger(new Trigger({
-
+                onUpdate(p) {
+                    p.attribute.addValue(AttributeType.MAGIC_ATTACK, p.stat.getStat(StatType.VITALITY) * 5);
+                },
             }))
             .setEnhancedClassName('세인티스 팔라딘'),
-        new CharacterClass('세인티스 팔라딘', '', p => {})
+
+        new CharacterClass('세인티스 팔라딘', `${StatType.VITALITY.displayName} 스탯에 비례해서 ${
+            AttributeType.MAGIC_ATTACK.asSubjective()} 증가합니다. 또한 ${AttributeType.MAX_LIFE.asSubjective()} 25% 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.addValue(AttributeType.MAGIC_ATTACK, Math.pow(p.stat.getStat(StatType.VITALITY), 1.05) * 8);
+                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.25);
+                },
+            }))
             .setCanChangeClass(p => (
                 p.stat.getStat(StatType.SPELL) >= 200 && p.stat.getStat(StatType.VITALITY) >= 200
             )),
-        new CharacterClass('대장장이', '', p => {
-            
-        })
-            .setTrigger(new Trigger({
 
+        new CharacterClass('대장장이', `${AttributeType.DEXTERITY.asSubjective()} 4% 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.DEXTERITY, 1.04);
+                },
             }))
+            .setEnhancedClassName('스펠릭 스미스'),
+
+        new CharacterClass('스펠릭 스미스', `${AttributeType.DEXTERITY.asSubjective()} 10% 증가합니다.`, p => {})
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.DEXTERITY, 1.1);
+                },
+            }))
+            .setCanChangeClass(p => (
+                p.stat.getStat(StatType.SENSE) >= 600 && p.stat.getStat(StatType.SPELL) >= 50
+            ))
     ];
 
     static getCharacterClass(name: string): CharacterClass | undefined {

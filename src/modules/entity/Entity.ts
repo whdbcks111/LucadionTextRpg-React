@@ -1,4 +1,4 @@
-import { Attribute, LivingEntity, Monster, Player, PlayerLog, Projectile, Resource, Trigger, ZoneType } from "../Internal";
+import { Attribute, ChatManager, ChatRoomManager, LivingEntity, Monster, Player, PlayerLog, Projectile, Resource, Trigger, ZoneType } from "../Internal";
 import { AttributeType, Item } from "../Internal";
 import Enum from "../util/Enum";
 import { Time } from "../Internal";
@@ -112,7 +112,9 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.ATTACK, 
             Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 75, 0, 170 - 75) * 12.5);
         this.attribute.addValue(AttributeType.ATTACK, 
-            Math.max(this.stat.getStat(StatType.STRENGTH) - 170, 0) * 14);
+            Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 170, 0, 1000 - 170) * 14.5);
+        this.attribute.addValue(AttributeType.ATTACK, 
+            Math.max(this.stat.getStat(StatType.STRENGTH) - 1000, 0) * 34);
         this.attribute.addValue(AttributeType.ATTACK, this.level * 2.5);
 
         this.attribute.addValue(AttributeType.RANGE_ATTACK, 
@@ -120,20 +122,25 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.RANGE_ATTACK, 
             Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 75, 0, 170 - 75) * 13.1);
         this.attribute.addValue(AttributeType.RANGE_ATTACK, 
-            Math.max(this.stat.getStat(StatType.STRENGTH) - 170, 0) * 14.5);
+            Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 170, 0, 1000 - 170) * 14.1);
+        this.attribute.addValue(AttributeType.RANGE_ATTACK, 
+            Math.max(this.stat.getStat(StatType.STRENGTH) - 1000, 0) * 25.5);
         this.attribute.addValue(AttributeType.RANGE_ATTACK, this.level * 3);
 
         this.attribute.addValue(AttributeType.LIFE_REGEN, 
-            this.stat.getStat(StatType.VITALITY) * 0.23);
+            this.stat.getStat(StatType.VITALITY) * 0.33 + this.level * 0.07);
         this.attribute.addValue(AttributeType.MAX_LIFE,
             Utils.clamp(this.stat.getStat(StatType.VITALITY), 0, 100) * 31.5);
         this.attribute.addValue(AttributeType.MAX_LIFE,
             Utils.clamp(this.stat.getStat(StatType.VITALITY) - 100, 0, 250 - 100) * 49.5);
         this.attribute.addValue(AttributeType.MAX_LIFE, 
-            Utils.clamp(this.stat.getStat(StatType.VITALITY) - 250, 0, 550 - 250) * 65.5);
+            Utils.clamp(this.stat.getStat(StatType.VITALITY) - 250, 0, 550 - 250) * 75.5);
         this.attribute.addValue(AttributeType.MAX_LIFE, 
-            Math.max(this.stat.getStat(StatType.VITALITY) - 550, 0) * 125.5);
+            Utils.clamp(this.stat.getStat(StatType.VITALITY) - 550, 0, 1000 - 550) * 185.5);
+        this.attribute.addValue(AttributeType.MAX_LIFE, 
+            Math.max(this.stat.getStat(StatType.VITALITY) - 1000, 0) * 345.5);
         this.attribute.addValue(AttributeType.MAX_LIFE, this.level * 40);
+        this.attribute.multiplyValue(AttributeType.MAX_LIFE, 1 + this.level * 0.001);
 
         this.attribute.addValue(AttributeType.MOVE_SPEED, 
             this.stat.getStat(StatType.AGILITY) * 0.8 + this.level * 0.1);
@@ -145,38 +152,40 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.MAGIC_ATTACK,
             Utils.clamp(this.stat.getStat(StatType.SPELL), 0, 75) * 6.5);
         this.attribute.addValue(AttributeType.MAGIC_ATTACK,
-            Utils.clamp(this.stat.getStat(StatType.SPELL) - 75, 0, 170 - 75) * 15.5);
+            Utils.clamp(this.stat.getStat(StatType.SPELL) - 75, 0, 170 - 75) * 13.5);
         this.attribute.addValue(AttributeType.MAGIC_ATTACK,
-            Math.max(this.stat.getStat(StatType.SPELL) - 170, 0) * 19);
+            Utils.clamp(this.stat.getStat(StatType.SPELL) - 170, 0, 1000 - 170) * 21.5);
+        this.attribute.addValue(AttributeType.MAGIC_ATTACK,
+            Math.max(this.stat.getStat(StatType.SPELL) - 1000, 0) * 35);
         this.attribute.addValue(AttributeType.MAGIC_PENETRATE, 
-            this.stat.getStat(StatType.SPELL) * 3.1);
+            this.stat.getStat(StatType.SPELL) * 5.1);
         this.attribute.addValue(AttributeType.MAX_MANA, 
             this.stat.getStat(StatType.SPELL) * 28.5 + this.level * 6);
         this.attribute.addValue(AttributeType.MANA_REGEN, 
-            this.stat.getStat(StatType.SPELL) * 0.15);
+            this.stat.getStat(StatType.SPELL) * 0.25);
 
         this.attribute.addValue(AttributeType.DEFEND, 
             this.stat.getStat(StatType.VITALITY) * 1.7);
         this.attribute.addValue(AttributeType.DEFEND_PENETRATE, 
             Utils.clamp(this.stat.getStat(StatType.STRENGTH), 0, 300) * 1.7);
         this.attribute.addValue(AttributeType.DEFEND_PENETRATE, 
-            Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 300, 0, 1000 - 300) * 3);
+            Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 300, 0, 1000 - 300) * 5);
         this.attribute.addValue(AttributeType.DEFEND_PENETRATE, 
-            Math.max(0, this.stat.getStat(StatType.STRENGTH) - 1000) * 5.3);
+            Math.max(0, this.stat.getStat(StatType.STRENGTH) - 1000) * 30.3);
 
         this.attribute.addValue(AttributeType.CRITICAL_DAMAGE, 
-            Utils.clamp(this.stat.getStat(StatType.SENSE), 0, 80) * 0.9);
+            Utils.clamp(this.stat.getStat(StatType.SENSE), 0, 80) * 0.6);
         this.attribute.addValue(AttributeType.CRITICAL_DAMAGE, 
-            Utils.clamp(this.stat.getStat(StatType.SENSE) - 80, 0, 150 - 80) * 0.6);
+            Utils.clamp(this.stat.getStat(StatType.SENSE) - 80, 0, 150 - 80) * 0.3);
         this.attribute.addValue(AttributeType.CRITICAL_DAMAGE, 
-            Math.max(this.stat.getStat(StatType.SENSE) - 150, 0) * 0.2);
+            Math.max(this.stat.getStat(StatType.SENSE) - 150, 0) * 0.06);
         this.attribute.addValue(AttributeType.CRITICAL_CHANCE, 
-            Math.min(this.stat.getStat(StatType.SENSE) * 0.1, 25));
+            Math.min(this.stat.getStat(StatType.SENSE) * 0.07533, 25));
 
         this.attribute.addValue(AttributeType.PROJECTILE_SPEED, 
-            this.stat.getStat(StatType.AGILITY) * 1.5);
+            this.stat.getStat(StatType.AGILITY) * 1.9);
         this.attribute.addValue(AttributeType.PROJECTILE_SPEED, 
-            this.stat.getStat(StatType.STRENGTH) * 1.5);
+            this.stat.getStat(StatType.STRENGTH) * 1.3);
 
         this.attribute.addValue(AttributeType.DEXTERITY, 
             Utils.clamp(this.stat.getStat(StatType.SENSE), 0, 75) * 0.7);
@@ -185,7 +194,7 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.DEXTERITY, 
             Utils.clamp(this.stat.getStat(StatType.SENSE) - 170, 0, 250 - 170) * 2);
         this.attribute.addValue(AttributeType.DEXTERITY, 
-            Math.max(this.stat.getStat(StatType.SENSE) - 250, 0) * 2.6);
+            Math.max(this.stat.getStat(StatType.SENSE) - 250, 0) * 2.8);
     }
 
     update() {
@@ -236,49 +245,61 @@ export abstract class Entity {
         if (!victim) return false;
         if(!victim.isAlive) return false;
 
-        let now = Date.now();
-        let abuser = this instanceof Projectile ? this.owner : this;
-        let location = this.getLocation();
+        const now = Date.now();
+        const abuser = this instanceof Projectile ? this.owner : this;
+        const location = this.getLocation();
         if(location === null) return false;
 
         if(abuser instanceof LivingEntity) {
             abuser.currentTarget = victim;
-            if(victim instanceof LivingEntity && !victim.currentTarget?.isAlive)
+            if(victim instanceof Player && !victim.currentTarget?.isAlive)
                 victim.currentTarget = abuser;
-            if(abuser instanceof Monster) abuser.tryAddTarget();
         }
 
-        if(abuser instanceof Player && victim instanceof Resource) {
-            if(!victim.canDestroy(abuser)) {
-                abuser.sendRawMessage('[ ' + victim.destroyableCondition + ' ]');
+        if(abuser instanceof Player) {
+            if(victim instanceof Resource) {
+                if(!victim.canDestroy(abuser)) {
+                    abuser.sendRawMessage('[ ' + victim.destroyableCondition + ' ]');
+                    return false;
+                }
+            }
+            if (victim instanceof Monster && 
+                !Array.from(victim.targets)
+                    .some(p => p instanceof Player && p.getPartyOwner() === abuser.getPartyOwner()) &&
+                victim.targets.size > 0) {
+                    abuser.sendRawMessage('[ 다른 파티가 이미 싸우고 있습니다. ]');
                 return false;
             }
-        }
+            if (victim instanceof Resource && 
+                victim.latestAbuser instanceof Player && 
+                victim.latestAbuser.getPartyOwner() !== abuser.getPartyOwner() &&
+                Date.now() - victim.latestAbused < 1000 * 10) {
+                    abuser.sendRawMessage('[ 다른 파티가 이미 파괴하고 있습니다. ]');
+                return false;
+            }
+            let location = this.getLocation();
+            if (victim instanceof Player && location.zoneType === ZoneType.PEACEFUL && abuser !== victim) {
+                abuser.sendRawMessage('[ 평화지역에서는 싸울 수 없습니다. ]');
+                return false;
+            }
 
-        if ((abuser instanceof Player && !this.isAttackEnded) ||
-            (options.applyAttackSpeed && abuser instanceof Player && !abuser.isAttackEnded)) {
-            abuser.sendRawMessage('[ 공격이 끝나지 않았습니다. ]');
-            return false;
-        }
-
-        if(location.zoneType === ZoneType.PEACEFUL && 
-            victim instanceof Player && abuser instanceof Player && abuser !== victim) {
-            abuser.sendRawMessage('[ 평화지역에서는 싸울 수 없습니다. ]');
-            return false;
+            if ((!this.isAttackEnded) ||
+                (options.applyAttackSpeed && !abuser.isAttackEnded)) {
+                abuser.showActionBar(ComponentBuilder.text(
+                    '[ 공격이 끝나지 않았습니다. ]',
+                    { color: 'yellow' }));
+                if(abuser.tickMessageId) 
+                    abuser.user.room?.removeChat(abuser.tickMessageId);
+                return false;
+            }
         }
 
         if(abuser instanceof LivingEntity) {
             if(!abuser.canAttack) {
                 if(abuser instanceof Player)
-                abuser.sendRawMessage('[ ' + (abuser.cannotAttackMessage ?? '공격할 수 없는 상태입니다.') + ' ]');
+                    abuser.sendRawMessage('[ ' + (abuser.cannotAttackMessage ?? '공격할 수 없는 상태입니다.') + ' ]');
+                else abuser.latestAttack = now;
                 return false;
-            }
-
-            if(victim instanceof Monster) {
-                if(abuser instanceof Player && !victim.fightingParty)
-                    victim.fightingParty = abuser.getPartyOwner();
-                victim.currentTarget = abuser;
-                victim.targets.add(abuser);
             }
 
             victim.latestAbuser = abuser;
@@ -292,10 +313,11 @@ export abstract class Entity {
         let avoidChance = Math.min(
             Math.max(
                 (victim.attribute.getValue(AttributeType.MOVE_SPEED) - this.attribute.getValue(AttributeType.MOVE_SPEED)) / 
-                    Math.max(this.attribute.getValue(AttributeType.MOVE_SPEED), 0) * (1 / (3 - 1)),
+                    Math.max(this.attribute.getValue(AttributeType.MOVE_SPEED), 0) * (1 / (1.8 - 1)),
                 Math.min(0.002 * victim.attribute.getValue(AttributeType.MOVE_SPEED) / 100, 0.12)
             ),
-            victim.attribute.getValue(AttributeType.MOVE_SPEED) > 10 && this.attribute.getValue(AttributeType.MOVE_SPEED) > 0 ? 0.9 : 1
+            victim.attribute.getValue(AttributeType.MOVE_SPEED) > 10 && this.attribute.getValue(AttributeType.MOVE_SPEED) > 0 ? 
+                0.95 : 1
         );
 
 
@@ -344,12 +366,17 @@ export abstract class Entity {
         let finalDefend = Math.max(0, victim.attribute.getValue(options.isMagicAttack ? 
             AttributeType.MAGIC_RESISTANCE : AttributeType.DEFEND) - finalPenetrate);
 
+        if(options.isFixedAttack) {
+            finalDefend = 0;
+        }
+
         let normalDamage = Math.max(0, finalAttack - finalDefend) * (1 - Attribute.getDefendRatio(finalDefend));
         let critDamage = Math.random() < critChance / 100 ? normalDamage * critIncrease / 100 : 0;
         let finalDamage = normalDamage + critDamage;
 
         victim.damage(finalDamage, abuser instanceof LivingEntity ? abuser: null);
         this.onHit(victim);
+        if(this instanceof Projectile) abuser.onProjectileHit(this, victim);
         if(options.onHit) options.onHit(this, victim);
         victim.onHitted(this);
 
@@ -457,6 +484,15 @@ export abstract class Entity {
         });
     }
 
+    onProjectileHit(projectile: Projectile, victim: Entity) {
+        EquipmentType.getAll().forEach(type => {
+            const item = this.slot.getItem(type);
+            item?.options?.forEach(option => {
+                option.onProjectileHit(projectile, victim);
+            });
+        });
+    }
+
     onHitted(attacker: Entity) {
         this.latestHitted = Date.now();
         EquipmentType.getAll().forEach(type => {
@@ -507,7 +543,8 @@ export class Stat {
         let newStat = new Stat();
 
         for(let typeName in obj) {
-            newStat.setStat(StatType.getByName(typeName), obj[typeName]);
+            let type = StatType.getByName(typeName);
+            if(type) newStat.setStat(type, obj[typeName]);
         }
 
         return newStat;
@@ -611,7 +648,7 @@ export class StatType extends Enum {
         this.displayName = displayName;
     }
 
-    static getAll() {
+    static getAll(): StatType[] {
         return Enum.getAll(StatType);
     }
 
@@ -648,6 +685,6 @@ export class Shield {
 
     static fromDataObj(obj: ExtraObject) {
         if(!obj) return null;
-        return new Shield(obj.amount, obj.durability);
+        return new Shield(obj.amount, obj.duration);
     }
 }

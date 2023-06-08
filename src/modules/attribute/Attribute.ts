@@ -84,6 +84,14 @@ export class Attribute {
         this.modifiers = [];
     }
 
+    setCurrentToDefault() {
+        this.updateValues();
+        AttributeType.getAll().forEach(type => {
+            this.setDefault(type, this.getValue(type));
+        });
+        this.resetValues();
+    }
+
     static getDefendRatio(def: number) {
         if(def < 0) return 0;
         return (def / (def + 20000)) * 0.8;

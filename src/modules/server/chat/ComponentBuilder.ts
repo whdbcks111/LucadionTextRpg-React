@@ -1,9 +1,9 @@
 import { CSSProperties } from "react";
-import { BlockTextComponent, ButtonComponent, DisplayType, EmbedTextComponent, HiddenComponent, MessageComponent, ProgressComponent, TextComponent } from "../../../types";
+import { BlockTextComponent, ButtonComponent, DisplayType, EmbedTextComponent, HiddenComponent, ImageComponent, MessageComponent, ProgressComponent, TextComponent } from "../../../types";
 import { Utils } from "../../util/Utils";
 
 export function isMessageComponent(obj: any): obj is MessageComponent {
-    return typeof obj === 'object' && 'children' in obj;
+    return typeof obj === 'object' && obj !== null && 'children' in obj;
 }
 
 export function isTextComponent(obj: any): obj is TextComponent {
@@ -15,6 +15,15 @@ export function isTextComponent(obj: any): obj is TextComponent {
 export function isBlockTextComponent(obj: any): obj is TextComponent {
     return isTextComponent(obj) &&
         'block' in obj && obj['block'] === true;
+}
+export function isImageComponent(obj: any): obj is ImageComponent {
+    return isMessageComponent(obj) &&
+        'imageSource' in obj &&
+        typeof obj['imageSource'] === 'string' &&
+        'width' in obj &&
+        typeof obj['width'] === 'number' &&
+        'height' in obj &&
+        typeof obj['height'] === 'number';
 }
 
 export function getRawText(message: MessageComponent) {
@@ -52,7 +61,7 @@ export function isProgressComponent(obj: any): obj is ProgressComponent {
 
 export function includesHiddenComponent(obj: MessageComponent): boolean {
     if(isHiddenComponent(obj)) return true;
-    else return obj['children'].some(child => includesHiddenComponent(child));
+    else return (obj['children'] ?? []).some(child => includesHiddenComponent(child));
 } 
 
 export class ComponentBuilder {
@@ -61,6 +70,21 @@ export class ComponentBuilder {
         return {
             children
         };
+    }
+
+    static image(src: string, width: number, height: number): ImageComponent {
+        return {
+            children: [],
+            imageSource: src,
+            width, height
+        };
+    }
+
+    static texts(children: (string | MessageComponent)[]) {
+        return ComponentBuilder.message(children.map(e => {
+            if(typeof e === 'string') return ComponentBuilder.text(e);
+            else return e;
+        }))
     }
 
     static empty() {

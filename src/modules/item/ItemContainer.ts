@@ -24,9 +24,13 @@ export class ItemContainer {
         return true;
     }
 
+    get usingSpace() {
+        return this.contents.map(i => i ? i.count : 0).reduce((a, b) => a + b, 0);
+    }
+
     setItemCount(index: number, count: number) {
         let itemStack = this.contents[index];
-        if(!(index in this.contents)) return false;
+        if(!(index in this.contents)) return;
         if(count <= 0) this.contents.splice(index, 1);
         else if(itemStack) itemStack.count = count;
     }
@@ -149,7 +153,11 @@ export class Inventory extends ItemContainer {
             ComponentBuilder.embed([ComponentBuilder.hidden([
                 ComponentBuilder.join(this.contents.map((itemStack, index) => {
                     return ComponentBuilder.message([
-                        ComponentBuilder.blockText((index + 1).toString(), { width: '20px', paddingRight: '7px', textAlign: 'end', color: Utils.MAIN_COLOR }),
+                        ComponentBuilder.blockText((index + 1).toString(), { 
+                            width: '2.1em', 
+                            paddingRight: '13px', 
+                            textAlign: 'end', 
+                            color: Utils.MAIN_COLOR }),
                         itemStack ? 
                             ComponentBuilder.message([
                                 itemStack.item.getDisplayName(), 
@@ -239,7 +247,7 @@ export class Inventory extends ItemContainer {
 
     setItemCount(index: number, count: number) {
         let itemStack = this.contents[index];
-        if(!(index in this.contents)) return false;
+        if(!(index in this.contents)) return;
         if(count <= 0) this.contents[index] = null;
         else if(itemStack) itemStack.count = count;
     }

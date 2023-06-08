@@ -1,30 +1,113 @@
+import dotenv from 'dotenv'
+dotenv.config();
+
 import crypto from 'crypto';
 import { Socket } from 'socket.io';
 import fs from 'graceful-fs';
 import * as Rpg from './modules/Internal';
-import { AttributeType, Utils, Command, CommandArg, CommandManager, EquipmentType, 
-    Item, Monster, Player, ShopStateType, StatType, Time, TradeManager, 
-    TradeRequest, World, ZoneType, PlayerRankingCriteria, User, ChatRoomManager, 
-    ChatRoom, DateFormat, Config, ChatManager } from './modules/Internal';
-import { ChatData, EmailAuthCodeMap, HandleChatData, NullableString, LoginInfo, 
-    RegisterInfo, ServerPingData, PingRoomData, RegisterMessage, LoginMessage } from './types';
+import {
+    AttributeType, Utils, Command, CommandArg, CommandManager, EquipmentType,
+    Item, Monster, Player, ShopStateType, StatType, Time, TradeManager,
+    TradeRequest, World, ZoneType, PlayerRankingCriteria, User, ChatRoomManager,
+    ChatRoom, DateFormat, Config, ChatManager
+} from './modules/Internal';
+import {
+    ChatData, EmailAuthCodeMap, HandleChatData, NullableString, LoginInfo,
+    RegisterInfo, ServerPingData, PingRoomData, RegisterMessage, LoginMessage, ChatFlag, MessageComponent
+} from './types';
 import { chat } from './modules/server/chat/ChatSocket';
 import { sendMail } from './modules/server/EmailManager';
 import axios from 'axios';
-import { ComponentBuilder, getRawText } from './modules/server/chat/ComponentBuilder';
+import { ComponentBuilder, getRawText, isMessageComponent } from './modules/server/chat/ComponentBuilder';
+import path from 'path';
 
 Utils.importAll(Rpg, globalThis);
 
 const MAIN_ROOM_ID = 'main-room';
 
-const SAVE_INTERVAL = 1000 * 30;
-const BACKUP_INTERVAL = 1000 * 60 * 60 * 12;
-const BACKUP_TIMES = Math.ceil(BACKUP_INTERVAL / SAVE_INTERVAL);
+const SAVE_INTERVAL = 1000 * 60;
+const now = new Date();
+let backupDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
 
 const emailAuthHtml = fs.readFileSync('./private/emailAuth.html').toString();
 
 const emailAuthCodes: EmailAuthCodeMap = {};
 let authCode: NullableString = null;
+
+User.loadAll();
+ChatRoomManager.loadAll();
+Player.loadAll();
+
+ChatRoomManager.registerRoom(new ChatRoom(MAIN_ROOM_ID, '메인 광장').setOpenRoom());
+ChatRoomManager.registerRoom(new ChatRoom('sub_1', '서브 광장 1').setOpenRoom());
+ChatRoomManager.registerRoom(new ChatRoom('sub_2', '서브 광장 2').setOpenRoom());
+ChatRoomManager.registerRoom(new ChatRoom('sub_3', '서브 광장 3').setOpenRoom());
+
+process.on('SIGINT', async () => {
+    console.log('saving data...');
+    await saveData();
+    console.log('save complete!');
+    const files = fs.readdirSync(Utils.BACKUP_PATH);
+    let lastCreated = 0;
+    for(const file of files) {
+        const birth = fs.statSync(Utils.BACKUP_PATH + file).birthtimeMs;
+        if(birth > lastCreated) lastCreated = birth;
+    }
+    if(Date.now() - lastCreated > 1000 * 3600) {
+        console.log('backup data...');
+        await backupData();
+        console.log('backup complete!');
+    }
+    process.exit();
+});
+
+setInterval(() => {
+    try {
+        Time.update();
+    }
+    catch (e) {
+        console.error(e);
+    }
+}, 100);
+
+setInterval(() => {
+    if (Date.now() > backupDate.getTime()) {
+        backupDate.setDate(backupDate.getDate() + 1);
+        backupData();
+    }
+    else {
+        saveData();
+    }
+}, SAVE_INTERVAL);
+
+async function backupData() {
+    await saveData();
+    copyFolderSync(Utils.SAVE_PATH, `${Utils.BACKUP_PATH}${new DateFormat(new Date()).format('YYYY-MM-DD(hh-mm-ss)')}/`);
+}
+
+function copyFolderSync(source: string, target: string) {
+    if (!fs.existsSync(target)) {
+        fs.mkdirSync(target);
+    }
+
+    const files = fs.readdirSync(source);
+
+    files.forEach(file => {
+        const currentPath = path.join(source, file);
+        const targetPath = path.join(target, file);
+
+        if (fs.statSync(currentPath).isDirectory())
+            copyFolderSync(currentPath, targetPath);
+        else
+            fs.copyFileSync(currentPath, targetPath);
+    });
+}
+
+async function saveData() {
+    await User.saveAll();
+    await ChatRoomManager.saveAll();
+    await Player.saveAll();
+}
 
 const commandManager = new CommandManager([
 
@@ -40,12 +123,31 @@ const commandManager = new CommandManager([
 
     new Command(['실행'], [CommandArg.STRING], ['exec'], (chat, player, label, args) => {
         try {
-            let result = String(eval(args[0]));
-            ChatManager.sendBotRawMessage(chat.room, result.trim().length > 0 ? result : '(void)');
+            let result = eval(args[0]);
+            if (isMessageComponent(result)) {
+                player.sendMessage(result);
+            }
+            else player.sendRawMessage(String(result).trim().length > 0 ? String(result) : '(void)');
         }
         catch (e) {
-            if(e instanceof Error) ChatManager.sendBotRawMessage(chat.room, String(e.stack));
+            if (e instanceof Error) ChatManager.sendBotRawMessage(chat.room, String(e.stack));
         }
+    }).setDevOnly(true).setAliveOnly(false),
+
+    new Command(['공지'], [CommandArg.STRING], ['ann'], (chat, player, label, args) => {
+        ChatRoomManager.rooms.forEach(room => {
+            ChatManager.sendBotMessage(room.id, ComponentBuilder.text('',
+                { display: 'flex', flexDirection: 'column' }, [
+                ComponentBuilder.blockText('공지', {
+                    color: 'white',
+                    backgroundColor: 'red',
+                    textAlign: 'center',
+                    flexGrow: '1',
+                    borderRadius: '4px'
+                }),
+                ComponentBuilder.text(`\n${args[0]}`)
+            ]))
+        })
     }).setDevOnly(true).setAliveOnly(false),
 
     new Command(['스테이터스'], [], ['s'], (chat, player, label, args) => {
@@ -72,7 +174,7 @@ const commandManager = new CommandManager([
         else if (Date.now() - player.latestHitted < 1000 * 10) {
             player.sendRawMessage('[ 마지막으로 공격 받은 시점부터 10초가 지나야 로그아웃 가능합니다. ]');
         }
-        else if (Date.now() - player.latestAttack < 1000 * 10) {
+        else if (Date.now() - player.latestAbused < 1000 * 10) {
             player.sendRawMessage('[ 마지막으로 공격한 시점부터 10초가 지나야 로그아웃 가능합니다. ]');
         }
         else {
@@ -146,7 +248,7 @@ const commandManager = new CommandManager([
 
     new Command(['상점', '상점 목록'], [], ['sh', 'z'], (chat, player, label, args) => {
         let loc = player.getLocation();
-        if(loc.shop) {
+        if (loc.shop) {
             player.sendMessage(loc.shop.getShopInfo());
         }
         else {
@@ -168,7 +270,7 @@ const commandManager = new CommandManager([
     }),
 
     new Command(['스킬 목록'], [], ['sl', 'l'], (chat, player, label, args) => {
-        if(player.skills.length === 0)
+        if (player.skills.length === 0)
             player.sendRawMessage('[ 보유한 스킬이 없습니다. ]');
         else
             player.sendMessage(player.getSkillListInfo());
@@ -269,7 +371,7 @@ const commandManager = new CommandManager([
     new Command(['스탯 분배'], [CommandArg.STRING, CommandArg.POSITIVE_INTEGER], ['st', 'r'], (chat, player, label, args) => {
         let count = parseInt(args[1]);
         let type = StatType.getByDisplayName(args[0]);
-        if(!type) {
+        if (!type) {
             player.sendRawMessage('[ 해당하는 스탯은 존재하지 않습니다. ]');
         }
         else if (player.statPoint < count) {
@@ -296,7 +398,7 @@ const commandManager = new CommandManager([
         let type = EquipmentType.getByDisplayName(slotName);
         if (type) {
             let item = player.slot.getItem(type);
-            if(item) {
+            if (item) {
                 player.inventory.addItem(item);
                 player.slot.setItem(type, null);
                 player.sendRawMessage('[ 장착을 해제했습니다. ]');
@@ -342,7 +444,7 @@ const commandManager = new CommandManager([
             player.sendRawMessage('[ 사용할 수 없는 아이템입니다. ]');
         }
         else {
-            const displayName =  itemStack.item.getDisplayName(true);
+            const displayName = itemStack.item.getDisplayName(true);
             const raw = getRawText(displayName);
             player.sendMessage(ComponentBuilder.message([
                 ComponentBuilder.text('[ '),
@@ -453,7 +555,7 @@ const commandManager = new CommandManager([
             let object = location.getPlayers()[index];
             if (!object)
                 player.sendRawMessage('[ 해당하는 번호의 플레이어는 존재하지 않습니다. ]');
-            else player.attack(object); 
+            else player.attack(object);
         }
     }),
 
@@ -499,11 +601,11 @@ const commandManager = new CommandManager([
     }),
 
     new Command(['파티 퇴장'], [], ['pl'], (chat, player, label, args) => {
-        if(player.partyOwner) {
-          player.sendRawMessage('[ 파티를 떠나셨습니다. ]');
-          if(player.getPartyOwner().user.currentRoom !== player.user.currentRoom)
-            player.getPartyOwner().sendRawMessage('[ ' + player.getName() + '님이 파티를 떠나셨습니다. ]');
-          player.leaveParty();
+        if (player.partyOwner) {
+            player.sendRawMessage('[ 파티를 떠나셨습니다. ]');
+            if (player.getPartyOwner().user.currentRoom !== player.user.currentRoom)
+                player.getPartyOwner().sendRawMessage('[ ' + player.getName() + '님이 파티를 떠나셨습니다. ]');
+            player.leaveParty();
         }
         else player.sendRawMessage('[ 당신은 파티 멤버가 아닙니다. ]');
     }),
@@ -523,16 +625,16 @@ const commandManager = new CommandManager([
     }),
 
     new Command(['파티 해산'], [], ['pr'], (chat, player, label, args) => {
-        if(!player.partyOwner) {
-            if(player.partyMembers.length <= 0) {
-              player.sendRawMessage('[ 파티에 멤버가 없습니다. ]');
+        if (!player.partyOwner) {
+            if (player.partyMembers.length <= 0) {
+                player.sendRawMessage('[ 파티에 멤버가 없습니다. ]');
             }
             else {
-              player.dissolveParty();
-              player.sendRawMessage('[ 파티를 해산시켰습니다. ]');
+                player.dissolveParty();
+                player.sendRawMessage('[ 파티를 해산시켰습니다. ]');
             }
-          }
-          else player.sendRawMessage('[ 당신은 파티장이 아닙니다. ]');
+        }
+        else player.sendRawMessage('[ 당신은 파티장이 아닙니다. ]');
     }),
 
     new Command(['파티 정보'], [], ['pt'], (chat, player, label, args) => {
@@ -545,9 +647,9 @@ const commandManager = new CommandManager([
         let object = location.objects[index];
         if (!object)
             player.sendRawMessage('[ 해당하는 번호의 오브젝트는 존재하지 않습니다. ]');
-        else if (object instanceof Monster && 
+        else if (object instanceof Monster &&
             !Array.from(object.targets)
-                .some(p => p instanceof Player && p.getPartyOwner() === player.getPartyOwner()) && 
+                .some(p => p instanceof Player && p.getPartyOwner() === player.getPartyOwner()) &&
             object.targets.size > 0
         ) {
             player.sendRawMessage('[ 다른 파티가 이미 싸우고 있습니다. ]');
@@ -582,9 +684,12 @@ const commandManager = new CommandManager([
             player.sendRawMessage('[ 해당하는 번호의 플레이어는 존재하지 않습니다. ]');
         else if (target === player)
             player.sendRawMessage('[ 자신과는 거래할 수 없습니다. ]');
+        else if (TradeManager.getRequestTo(target)?.player === player) {
+            player.sendRawMessage('[ 이미 거래 요청을 보냈습니다. ]');
+        }
         else {
             TradeManager.requestTrade(player, target);
-            Player.sendGroupRawMessage([player, target], 
+            Player.sendGroupRawMessage([player, target],
                 `[ ${player.getName()}님이 ${target.getName()}님에게 거래 요청을 보냈습니다. ]\n` +
                 `수락하시려면 ${Utils.PREFIX}거래 수락, 거절하시려면 ${Utils.PREFIX}거래 거절 을 입력해주세요.\n` +
                 TradeRequest.DEFAULT_REMAIN_TIME.toFixed(0) + '초 후에 만료됩니다.');
@@ -593,11 +698,11 @@ const commandManager = new CommandManager([
 
     new Command(['거래 거절'], [], ['td'], (chat, player, label, args) => {
         let request = TradeManager.getRequestTo(player);
-        if(!request)
-          player.sendRawMessage('[ 받은 거래 요청이 없습니다. ]');
+        if (!request)
+            player.sendRawMessage('[ 받은 거래 요청이 없습니다. ]');
         else {
-          request.deny();
-          player.sendRawMessage('[ 거래가 거절되었습니다. ]');
+            request.deny();
+            player.sendRawMessage('[ 거래가 거절되었습니다. ]');
         }
     }),
 
@@ -658,35 +763,35 @@ const commandManager = new CommandManager([
 
     new Command(['거래 확인'], [], ['tc', 'tcf'], (chat, player, label, args) => {
         let trade = TradeManager.getTrade(player);
-        if(!trade)
-          player.sendRawMessage('[ 거래가 시작되지 않았습니다. ]');
+        if (!trade)
+            player.sendRawMessage('[ 거래가 시작되지 않았습니다. ]');
         else {
-          let tradePlayer = trade.player1.player === player ? trade.player1 : trade.player2;
-          if(tradePlayer.hasConfirmed) {
-            player.sendRawMessage('[ 이미 확인된 상태입니다. ]');
-          }
-          else {
-            tradePlayer.hasConfirmed = true;
-            Player.sendGroupRawMessage([trade.player1.player, trade.player2.player], 
-                `[ ${player.getName()}님이 거래 내용을 확인하셨습니다. ]`);
-          }
+            let tradePlayer = trade.player1.player === player ? trade.player1 : trade.player2;
+            if (tradePlayer.hasConfirmed) {
+                player.sendRawMessage('[ 이미 확인된 상태입니다. ]');
+            }
+            else {
+                tradePlayer.hasConfirmed = true;
+                Player.sendGroupRawMessage([trade.player1.player, trade.player2.player],
+                    `[ ${player.getName()}님이 거래 내용을 확인하셨습니다. ]`);
+            }
         }
     }),
 
     new Command(['거래 확인취소'], [], ['tcc'], (chat, player, label, args) => {
         let trade = TradeManager.getTrade(player);
-        if(!trade)
-          player.sendRawMessage('[ 거래가 시작되지 않았습니다. ]');
+        if (!trade)
+            player.sendRawMessage('[ 거래가 시작되지 않았습니다. ]');
         else {
-          let tradePlayer = trade.player1.player === player ? trade.player1 : trade.player2;
-          if(!tradePlayer.hasConfirmed) {
-            player.sendRawMessage('[ 이미 확인을 하지 않은 상태입니다. ]');
-          }
-          else {
-            tradePlayer.hasConfirmed = false;
-            Player.sendGroupRawMessage([trade.player1.player, trade.player2.player], 
-                `[ ${player.getName()}님이 거래 내용 확인을 철회하셨습니다. ]`);
-          }
+            let tradePlayer = trade.player1.player === player ? trade.player1 : trade.player2;
+            if (!tradePlayer.hasConfirmed) {
+                player.sendRawMessage('[ 이미 확인을 하지 않은 상태입니다. ]');
+            }
+            else {
+                tradePlayer.hasConfirmed = false;
+                Player.sendGroupRawMessage([trade.player1.player, trade.player2.player],
+                    `[ ${player.getName()}님이 거래 내용 확인을 철회하셨습니다. ]`);
+            }
         }
     }),
 
@@ -751,12 +856,16 @@ const commandManager = new CommandManager([
             player.sendRawMessage('[ 해당하는 장소는 존재하지 않습니다. ]');
         }
         else if (!player.moveTarget) {
-            let to = World.getLocation(locationName);
-            player.sendRawMessage(`[ ${locationName}으로 이동하는 중.. ]\n` +
-                `(거리 : ${location.getDistance(to).toFixed(1)}m  ` +
-                `예상 소요시간 : ${location.getMoveTime(to, 
-                    player.attribute.getValue(AttributeType.MOVE_SPEED)).toFixed(1)}초)`);
-            player.move(to.name);
+            try {
+                let to = World.getLocation(locationName);
+                const chatData = player.sendRawMessage(`[ ${Utils.asTo(locationName)} 이동하는 중.. ]\n` +
+                    `(거리 : ${location.getDistance(to).toFixed(1)}m  ` +
+                    `예상 소요시간 : ${location.getMoveTime(to,
+                        player.attribute.getValue(AttributeType.MOVE_SPEED)).toFixed(1)}초)`);
+                player.move(to.name);
+            } catch (e) {
+                player.sendRawMessage('[ 유효하지 않은 장소의 이름입니다. ]');
+            }
         }
         else {
             player.sendRawMessage('[ 이미 이동중입니다. ]');
@@ -787,47 +896,6 @@ const commandManager = new CommandManager([
     }).setAliveOnly(false)
 ]);
 
-User.loadAll();
-ChatRoomManager.loadAll();
-Player.loadAll();
-
-ChatRoomManager.registerRoom(new ChatRoom(MAIN_ROOM_ID, '메인 광장').setOpenRoom());
-ChatRoomManager.registerRoom(new ChatRoom('sub_1', '서브 광장 1').setOpenRoom());
-ChatRoomManager.registerRoom(new ChatRoom('sub_2', '서브 광장 2').setOpenRoom());
-ChatRoomManager.registerRoom(new ChatRoom('sub_3', '서브 광장 3').setOpenRoom());
-
-setInterval(() => {
-    try {
-        Time.update();
-    }
-    catch(e) {
-        console.error(e);
-    }
-}, 100);
-
-let saveCount = 0;
-setInterval(() => {
-    if((++saveCount) % BACKUP_TIMES === 0) {
-        if(!fs.existsSync(Utils.BACKUP_PATH)) fs.mkdirSync(Utils.BACKUP_PATH, { recursive: true });
-        if(!fs.existsSync(Utils.TMP_PATH)) fs.mkdirSync(Utils.TMP_PATH, { recursive: true });
-        let backupDir = `${Utils.BACKUP_PATH}${new DateFormat(new Date()).format('YYYY-MM-DD(hh-mm-ss)')}/`;
-        console.log('[lucadion] Data backed up! : ' + backupDir);
-        if(!fs.existsSync(backupDir)) fs.rename(Utils.TMP_PATH, backupDir, err => {
-            if(err) console.log(err);
-            saveData();
-        });
-    } 
-    else fs.rm(Utils.TMP_PATH, { recursive: true, force: true }, err => {
-        saveData();
-    });
-}, SAVE_INTERVAL);
-
-function saveData() {
-    User.saveAll();
-    ChatRoomManager.saveAll();
-    Player.saveAll();
-}
-
 chat.on('connection', (client: Socket) => {
     const getToken = (): string => client.handshake.session['auth-token'] ?? '';
     const getUser = () => User.getUserByToken(getToken());
@@ -835,33 +903,40 @@ chat.on('connection', (client: Socket) => {
     console.log(`[lucadion] Client connected: (${client.id})`);
 
     let user = getUser();
-    if(!user) client.emit('login-require');
+    if (!user) client.emit('login-require');
     else {
         client.join(user.currentRoom);
     }
 
     client.on('previous-chats', () => {
         let user = getUser();
-        if(!user) {
+        if (!user) {
             client.emit('login-require');
             return;
         }
         let room = ChatRoomManager.getRoom(user.currentRoom);
-        client.emit('previous-chats', room ? room.chatList.map(c => {
-            c = {...c};
+        const data = room ? room.chatList.slice(-30).map(c => {
+            c = { ...c };
 
-            if(!c.profilePic) {
+            if (!c.profilePic) {
                 let user = User.getUser(c.userId);
                 c.profilePic = user?.profilePic ?? undefined;
             }
 
             return c;
-        }): []);
+        }) : [];
+        client.emit('previous-chats', data);
     });
 
-    client.on('ping', () => {
+    client.on('disconnect', reason => {
+        clearInterval(pingId);
+    });
+
+    let beforePingData: ServerPingData = {};
+
+    const pingId = setInterval(() => {
         const user = getUser();
-        if(!user) {
+        if (!user) {
             client.emit('login-require');
             return;
         }
@@ -869,12 +944,12 @@ chat.on('connection', (client: Socket) => {
         client.rooms.forEach(id => client.leave(id));
         client.join(user.currentRoom);
 
-        const player = Player.getPlayerByUid(user.uid);
-        if(!player) return;
+        const player = user.player;
+        if (!player) return;
         player.latestPing = Date.now();
 
         const room = ChatRoomManager.getRoom(user.currentRoom);
-        if(!room) {
+        if (!room) {
             user.currentRoom = MAIN_ROOM_ID;
             return;
         }
@@ -887,24 +962,51 @@ chat.on('connection', (client: Socket) => {
             currentRoom: room.id,
             currentRoomName: room.name,
             rooms: user.rooms.map<PingRoomData>(r => ({
-                id: r.id, 
+                id: r.id,
                 name: r.name,
                 userCount: userCountMap.get(r.id) ?? 0
             })),
             playerLife: player.life / player.maxLife,
+            cooldowns: player.skills
+                .map<[string, number]>(s => [s.name, s.getRemainCooldown(player) / s.getCooldown(player)])
+                .filter(pair => pair[1] > 0),
             profilePic: user.profilePic,
             mapPlayerNames: player.getLocation().getPlayers().map(p => p.getName()),
             roomUserCount: userCountMap.get(room.id) ?? 0,
-            totalUserCount: connected.length
+            totalUserCount: connected.length,
+            currentActionBar: player.actionBars[0] ? player.actionBars[0][1] : null,
+            attackSpeedProgress: Math.min(1, (Date.now() - player.latestAttack) / 
+                (1000 / player.attribute.getValue(AttributeType.ATTACK_SPEED)))
         };
-        if(player.currentTarget) data.targetLife = player.currentTarget.life / player.currentTarget.maxLife;
+        data.targetLife = player.currentTarget ?
+            player.currentTarget.life / player.currentTarget.maxLife :
+            0;
+        Object.keys(data).forEach(key => {
+            if (JSON.stringify((beforePingData as any)[key]) === JSON.stringify((data as any)[key])) {
+                delete (data as any)[key];
+            }
+            else (beforePingData as any)[key] = (data as any)[key];
+        });
 
         client.emit('ping', data);
+    }, 100);
+
+    client.on('reset-ping', () => {
+        beforePingData = {};
+    });
+
+    client.on('ping', () => {
+        const user = getUser();
+        if (!user) return;
+        const player = user.player;
+        if (!player) return;
+
+        player.ping = Date.now() - player.latestPing;
     });
 
     client.on('change-profile', (base64: string) => {
         let user = getUser();
-        if(!user) {
+        if (!user) {
             client.emit('login-require');
             return;
         }
@@ -913,29 +1015,57 @@ chat.on('connection', (client: Socket) => {
 
     client.on('change-room', (id: string) => {
         let user = getUser();
-        if(!user) {
+        if (!user) {
             client.emit('login-require');
             return;
         }
-        
-        if(!user.rooms.some(r => r.id === id)) return;
+
+        if (!user.rooms.some(r => r.id === id)) return;
         user.currentRoom = id;
     });
- 
+
     client.on('chat', (data: ChatData) => {
-        let user = getUser();
-        if(!user) {
+        const user = getUser();
+        if (!user) {
             client.emit('login-require');
             return;
         }
-        if(user.currentRoom !== data.room) return;
-        let player = Player.getPlayerByUid(user?.uid);
-        let chatData = ChatManager.sendRawMessage(data.room,
+        if (user.currentRoom !== data.room) return;
+        const player = Player.getPlayerByUid(user?.uid);
+
+        if (Date.now() < user.muteExpirationDate) {
+            player?.showActionBar(ComponentBuilder.text('뮤트된 상태입니다.', { color: 'red' }), 0.5, 'mute');
+            return;
+        }
+
+        const flags: ChatFlag[] = [];
+
+        if (player?.isDev) flags.push('dev');
+        if (Player.players.length > 1 &&
+            Player.players.reduce((a, b) => a.level > b.level ? a : b) === player)
+            flags.push('#1');
+
+        const message = String(data.message).replace(/\u00A0/g, ' ');
+        let comp: MessageComponent = ComponentBuilder.text(message);
+
+        if (/^image::\d+x\d+::.+$/.test(message)) {
+            const matched = message.match(/^image::(\d+)x(\d+)::(.+)$/);
+            if (matched) {
+                let width = parseInt(matched[1]);
+                let height = parseInt(matched[2]);
+
+                comp = ComponentBuilder.image(matched[3], width, height);
+            }
+        }
+
+        const chatData = ChatManager.sendMessage(data.room,
             user?.uid,
-            player?.name ?? 'unnamed',
-            String(data.message), 
-            user?.profilePic ?? undefined);
-        if(!chatData) return;
+            player?.getName() ?? 'unnamed',
+            comp,
+            user?.profilePic ?? '',
+            flags);
+
+        if (!chatData) return;
 
         console.log(`[lucadion] [room: ${chatData.room}] [sender: ${player?.name}] > ${data.message}`);
 
@@ -943,55 +1073,27 @@ chat.on('connection', (client: Socket) => {
     });
 
     client.on('email-auth', (email: string) => {
-        if(email.length === 0) return;
+        if (email.length === 0) return;
         let authCode = Utils.randomString(8);
         // email send;
         sendMail(email, '회원가입 인증 코드입니다.', emailAuthHtml.replace('{{code}}', authCode));
-    
+
         emailAuthCodes[email] = {
             code: authCode,
             expirationDate: Date.now() + 1000 * 60 * 5
         };
     });
 
-    client.on('google-login', async (token: string) => {
-        const { data } = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`);
-        if(typeof data === 'object' && data.verified_email === true) {
-            const { email, name, picture } = data;
-            const userEmail = email + '#google';
-            let user = User.users.find(u => u.email === userEmail);
-            if(!user) {
-                const password = Utils.randomString(20);
-                let message = '', nameSuffix = 0;
-                do {
-                    message = registerUser(userEmail, 
-                        name + (nameSuffix > 0 ? '#' + nameSuffix : ''), 
-                        password);
-                    nameSuffix++;
-                } while(message !== 'success');
-                user = User.users.find(u => u.email === userEmail);
-                if(user) user.profilePic = picture;
-            }
-            loginUser(userEmail, '');
-
-            if(user?.token) {
-                client.handshake.session['auth-token'] = user.token;
-                client.handshake.session.save();
-            }
-            client.emit('google-login', true);
-        }
-        else client.emit('google-login', false);
-    });
-
     client.on('login', (data: LoginInfo) => {
         const user = User.users.find(u => u.email === data.email);
         const response = data.email.includes('#') ? 'user-not-exists' : loginUser(data.email, data.password);
-    
-        if(user?.token) {
+
+        if (user?.token) {
+            console.log('[lucadion] Logged in socket id : ' + client.id);
             client.handshake.session['auth-token'] = user.token;
             client.handshake.session.save();
         }
-    
+
         client.emit('login', response);
     });
 
@@ -999,54 +1101,161 @@ chat.on('connection', (client: Socket) => {
 
         let response: RegisterMessage = 'success';
 
-        if(!emailAuthCodes[data.email]) {
+        if (!emailAuthCodes[data.email]) {
             response = 'auth-code-doesnt-sent';
             client.emit('register', response);
             return;
         }
-        if(emailAuthCodes[data.email].code !== data.emailAuthCode) {
+        if (emailAuthCodes[data.email].code !== data.emailAuthCode) {
             response = 'auth-code-not-match';
             client.emit('register', response);
             return;
         }
-        if(emailAuthCodes[data.email].expirationDate < Date.now()) {
+        if (emailAuthCodes[data.email].expirationDate < Date.now()) {
             response = 'auth-code-expired';
             client.emit('register', response);
             return;
         }
 
         response = registerUser(data.email, data.nickname, data.password);
-    
+
         client.emit('register', response);
-    })
+    });
+
+    client.on('kakao-login', async (code: string) => {
+        try {
+            const { data: tokenData } = await axios.post(`https://kauth.kakao.com/oauth/token?` +
+                `grant_type=authorization_code&` +
+                `client_id=${process.env.REACT_APP_KAKAO_CLIENT_ID}&` +
+                `redirect_uri=https://lucadion.mcv.kr/kakao_login&` +
+                `code=${code}`);
+            if ('access_token' in tokenData) {
+                const { access_token: accessToken } = tokenData;
+                const { data } = await axios.get(`https://kapi.kakao.com/v2/user/me`, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                });
+                const { id, kakao_account: kakaoAccount } = data;
+                const { profile } = kakaoAccount;
+                const { profile_image_url: profileImage } = profile;
+
+                loginWithOAuth2('kakao', client, id, profileImage);
+            }
+            client.emit('kakao-login');
+        }
+        catch(e) {
+            console.error(e);
+        }
+    });
+
+    client.on('naver-login', async ({ code, state }: { code: string, state: string }) => {
+        try {
+            const { data: tokenData } = await axios.get(`https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&` +
+                `response_type=code&` +
+                `client_id=${process.env.REACT_APP_NAVER_CLIENT_ID}&` +
+                `client_secret=${process.env.NAVER_CLIENT_SECRET}&` +
+                `redirect_uri=${process.env.REACT_APP_NAVER_REDIRECT_URL}&` +
+                `code=${code}&state=${state}`, {
+                headers: {
+                    'X-Naver-Client-Id': process.env.REACT_APP_NAVER_CLIENT_ID,
+                    'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET
+                }
+            });
+            if ('access_token' in tokenData) {
+                const { token_type: tokenType, access_token: accessToken } = tokenData;
+                const { data } = await axios.get('https://openapi.naver.com/v1/nid/me', {
+                    headers: {
+                        Authorization: `${tokenType} ${accessToken}`
+                    }
+                });
+                const { response } = data;
+                const { profile_image: profileImage, email } = response;
+
+                loginWithOAuth2('naver', client, email, profileImage);
+            }
+            client.emit('naver-login');
+        }
+        catch(e) {
+            console.error(e);
+        }
+    });
+
+    client.on('google-login', async (token: string) => {
+        try {
+            const { data } = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`);
+            if (typeof data === 'object' && data.verified_email === true) {
+                const { email, picture } = data;
+                loginWithOAuth2('google', client, email, picture);
+            }
+            client.emit('google-login');   
+        }
+        catch(e) {
+            console.error(e);
+        }
+    });
+
+    client.on('nickname-check', (name: string) => {
+        client.emit('nickname-check', !Player.cannotUseNickname(name) && name.trim().length > 0);
+    });
+
+    client.on('nickname-change', (name: string) => {
+        const user = getUser();
+        user?.player?.changeName(name);
+        client.emit('nickname-change');
+    });
 });
+
+function loginWithOAuth2(platform: string, client: Socket, email: string, picture: string) {
+
+    if(picture.includes('http://')) picture = picture.replace('http:', 'https:');
+
+    const userEmail = `${email}#${platform}`;
+    let user = User.users.find(u => u.email === userEmail);
+    if (!user) {
+        const password = Utils.randomString(20);
+        const result = registerUser(userEmail, '', password);
+        user = User.users.find(u => u.email === userEmail);
+        if (user) user.profilePic = picture;
+    }
+    loginUser(userEmail, '');
+
+    if (user?.player?.name === '') client.emit('nickname-change');
+
+    if (user?.token) {
+        client.handshake.session['auth-token'] = user.token;
+        client.handshake.session.save();
+    }
+}
 
 function loginUser(email: string, password: string): LoginMessage {
     const user = User.users.find(u => u.email === email) ?? null;
 
-    if(!user) return 'user-not-exists';
+    if (!user) return 'user-not-exists';
 
     if (!email.includes('#') && crypto.createHash('sha512')
         .update(password + user.salt)
-        .digest('base64') !== user.passwordHash) 
+        .digest('base64') !== user.passwordHash)
         return 'password-not-match'
 
     user.token = Utils.randomString(30);
     user.tokenExpirationDate = Date.now() + 1000 * 60 * 60 * 12;
 
-    Player.getPlayerByUid(user.uid)?.login();
+    const player = Player.getPlayerByUid(user.uid);
+    player?.login();
+    console.log(`[lucadion] User successfully logged in : ${player?.name} (${player?.uid})`);
     return 'success';
 }
- 
+
 function registerUser(email: string, nickname: string, password: string): RegisterMessage {
-    if(User.users.some(u => u.email === email)) return 'email-already-registered';
-    if(Player.players.some(u => u.name === nickname)) return 'nickname-already-exists';
+    if (User.users.some(u => u.email === email)) return 'email-already-registered';
+    if (Player.cannotUseNickname(nickname)) return 'nickname-cannot-use';
 
     let uid: string = '';
-    do { uid = crypto.randomUUID(); } while(User.getUser(uid)); 
+    do { uid = crypto.randomUUID(); } while (User.getUser(uid));
     let salt = Utils.randomString(20);
 
-    let newUser = new User(uid, email, 
+    let newUser = new User(uid, email,
         crypto.createHash('sha512').update(password + salt).digest('base64'), salt,
         null, 0, null, MAIN_ROOM_ID);
     let newPlayer = new Player(uid, nickname);
@@ -1060,17 +1269,17 @@ function registerUser(email: string, nickname: string, password: string): Regist
 }
 
 function handleMessage(chatData: HandleChatData) {
-    let { room, message, user } = chatData;
+    let { room, message, user, chatId } = chatData;
     try {
         let userId = user?.uid;
         let player = Player.getPlayerByUid(userId);
-        if(!player) return;
+        if (!player) return;
 
         player.user.currentRoom = room;
 
         const rawMessage = getRawText(message);
 
-        player.onChat(rawMessage);
+        player.onChat(rawMessage, chatId);
 
         if (rawMessage === authCode) {
             authCode = null;

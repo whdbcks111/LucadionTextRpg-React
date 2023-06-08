@@ -1,4 +1,4 @@
-import { Entity, FishDrops, ItemStack, Monster, Npc, Player, Resource, Terrain, DateFormat } from "../Internal";
+import { Entity, FishDrops, ItemStack, Monster, Npc, Player, Resource, Terrain, DateFormat, TimeFormat } from "../Internal";
 import Enum from "../util/Enum";
 import { ItemContainer } from "../Internal";
 import { Shop } from "../Internal";
@@ -161,7 +161,9 @@ export class Location {
                                         ComponentBuilder.progressBar(obj.life, obj.maxLife, 'percent', 'white', '100px') :
                                         ComponentBuilder.text('(죽음)' + (
                                             obj.regenTime > 60 * 10 ?
-                                                new DateFormat(new Date(obj.regenTime * 1000)).format(' [mm:ss]') : ''
+                                                new TimeFormat(obj.deadTime * 1000)
+                                                    .useUntilMinutes()
+                                                    .format('[m:ss]') : ''
                                         ))
                                     )
                                 ];
@@ -220,7 +222,8 @@ export class Location {
     }
 
     getPlayers(force = false) {
-        return Player.players.filter(player => player.location == this.name && player.isAlive && (player.isVisible || force));
+        return Player.players.filter(player => player.location == this.name && player.name.length > 0 && 
+            player.isAlive && (player.isVisible || force));
     }
 }
 

@@ -245,6 +245,19 @@ export class Item {
         player.attack(victim, options);
     };
 
+    static CLASS_CHANCE_USE_EVENT = (className: string, condition: (p: Player) => boolean, cannotUseReason: string) => 
+        (player: Player, index: number) => {
+            if(!condition(player)) {
+                player.sendRawMessage(cannotUseReason);
+                return;
+            }
+            player.inventory.addItemCount(index, -1);
+            player.sendMessage(ComponentBuilder.text('[ 신체를 재구성 하는 중... ]', { color: 'yellow' }))
+            player.inventory.delayTask(() => {
+                player.changeClass(className, true);
+            }, 1000);
+        }
+
     static EQUIP_USE_EVENT = (type: EquipmentType) => 
         (player: Player, index: number) => {
             let origin = player.slot.getItem(type);
@@ -257,9 +270,9 @@ export class Item {
     static FOOD_USE_EVENT = (args: { food: number, delay?: number, delayMessage?: string }) => 
         (player: Player, index: number) => {
             if (args.delayMessage) player.sendRawMessage(args.delayMessage);
+            player.inventory.addItemCount(index, -1);
             player.inventory.delayTask(() => {
                 player.food += args.food;
-                player.inventory.addItemCount(index, -1);
                 player.sendMessage(ComponentBuilder.message([
                     ComponentBuilder.text(`[ 포만감이 ${args.food.toFixed(1)}만큼 차올랐습니다. ]\n`),
                     ComponentBuilder.text('포만감 '),
@@ -271,8 +284,8 @@ export class Item {
     static CUSTOM_USE_EVENT = (args: { run: (player: Player, index: number) => void, delay?: number, delayMessage?: string }) => 
         (player: Player, index: number) => {
             if (args.delayMessage) player.sendRawMessage(args.delayMessage);
+            player.inventory.addItemCount(index, -1);
             player.inventory.delayTask(() => {
-                player.inventory.addItemCount(index, -1);
                 if(args.run) args.run(player, index);
             }, (args.delay ?? 0) * 1000);
         };
@@ -280,9 +293,9 @@ export class Item {
     static WATER_USE_EVENT = (args: { water: number, delay?: number, delayMessage?: string }) => 
         (player: Player, index: number) => {
             if (args.delayMessage) player.sendRawMessage(args.delayMessage);
+            player.inventory.addItemCount(index, -1);
             player.inventory.delayTask(() => {
                 player.water += args.water;
-                player.inventory.addItemCount(index, -1);
                 player.sendMessage(ComponentBuilder.message([
                     ComponentBuilder.text(`[ 수분이 ${args.water.toFixed(1)}만큼 차올랐습니다. ]\n`),
                     ComponentBuilder.text('수분 '),
@@ -294,9 +307,9 @@ export class Item {
     static MANA_USE_EVENT = (args: { mana: number, delay?: number, delayMessage?: string }) => 
         (player: Player, index: number) => {
             if (args.delayMessage) player.sendRawMessage(args.delayMessage);
+            player.inventory.addItemCount(index, -1);
             player.inventory.delayTask(() => {
                 player.mana += args.mana;
-                player.inventory.addItemCount(index, -1);
                 player.sendMessage(ComponentBuilder.message([
                     ComponentBuilder.text(`[ 마나가 ${args.mana.toFixed(1)}만큼 차올랐습니다. ]\n`),
                     ComponentBuilder.text('마나 '),
@@ -308,9 +321,9 @@ export class Item {
     static LIFE_USE_EVENT = (args: { life: number, delay?: number, delayMessage?: string }) => 
         (player: Player, index: number) => {
             if (args.delayMessage) player.sendRawMessage(args.delayMessage);
+            player.inventory.addItemCount(index, -1);
             player.inventory.delayTask(() => {
                 player.life += args.life;
-                player.inventory.addItemCount(index, -1);
                 player.sendMessage(ComponentBuilder.message([
                     ComponentBuilder.text(`[ 생명력이 ${args.life.toFixed(1)}만큼 차올랐습니다. ]\n`),
                     ComponentBuilder.text('생명력 '),
@@ -322,10 +335,10 @@ export class Item {
     static FOOD_AND_WATER_USE_EVENT = (args: { food: number, water: number, delay?: number, delayMessage?: string }) => 
         (player: Player, index: number) => {
             if (args.delayMessage) player.sendRawMessage(args.delayMessage);
+            player.inventory.addItemCount(index, -1);
             player.inventory.delayTask(() => {
                 player.food += args.food;
                 player.water += args.water;
-                player.inventory.addItemCount(index, -1);
                 player.sendMessage(ComponentBuilder.message([
                     ComponentBuilder.text(`[ 포만감이 ${args.food.toFixed(1)}, 수분이 ${args.water.toFixed(1)}만큼 차올랐습니다. ]\n`),
                     ComponentBuilder.text('포만감 '),

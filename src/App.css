@@ -427,6 +427,15 @@ body {
   font-family: 'GmarketSansMedium';
 }
 
+.chat-input.help:empty::after {
+  content: '::? 을 입력해 명령어 목록 확인';
+  color: #ffffff55;
+}
+
+.level-info {
+  color: lightgray;
+}
+
 .chat-toolbar > .chat-send {
   height: 100%;
   display: flex;
@@ -761,6 +770,11 @@ input[type='button']:hover {
   align-items: center;
   border-bottom: 1px solid var(--darkest-bg-color);
   padding: 5px 10px;
+}
+
+.hot-time-text {
+  color: orange;
+  padding-right: 20px;
 }
 
 .chat-top-bar .room-name {

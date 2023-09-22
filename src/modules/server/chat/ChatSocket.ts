@@ -27,8 +27,8 @@ const multerMiddleware = multer({
 });
 
 const httpsOptions = {
-    key: fs.readFileSync('./ssl/private.key'),
-    cert: fs.readFileSync('./ssl/certificate.crt')
+    key: fs.readFileSync('/etc/letsencrypt/live/lucadion.mcv.kr/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/lucadion.mcv.kr/fullchain.pem')
 };
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -47,9 +47,9 @@ app.use((req, res, next) => {
     else next();
 });
 
-// app.get('/.well-known/pki-validation/844387E50B2F9DC1E60BC286782D7190.txt', (req, res) => {
-//     res.send(`8CEF3A21CEA9CC6859D9A0E004E4F037AA93B929EAF38CA968F948B82764C5BD\ncomodoca.com\nc1ef949af6ad535`);
-// })
+// app.get('/.well-known/pki-validation/D550874495D89E1F91429996335DCE64.txt', (req, res) => {
+//     res.send(`80BEF2EAC0C5614E8260B9DF94C255A457E0C189A5BEB9DB6256CEB073FE3C42\ncomodoca.com\ndbea2c93e3c327d`);
+// });
 
 app.post('/upload_image', multerMiddleware.single('file'), (req, res) => {
     if(!req.file) return;

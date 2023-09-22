@@ -800,7 +800,25 @@ export class ItemPreset {
             options: [
                 new Option('흑염', { level: 40, time: 10, chance: 0.3 })
             ],
-            requiredLevel: 1400
+            requiredLevel: 1300
+        },
+        {
+            name: '엔드 오브 어비스',
+            type: '장검',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.ATTACK, 35600),
+                new AttributeModifier(true, AttributeType.ATTACK, 1.15),
+                new AttributeModifier(true, AttributeType.HEAL_EFFICIENCY, 1.2),
+                new AttributeModifier(false, AttributeType.DEFEND_PENETRATE, 50000),
+                new AttributeModifier(true, AttributeType.ATTACK_SPEED, 2.0)
+            ],
+            durability: 9345,
+            options: [
+                new Option('독날', { level: 20, time: 1})
+            ],
+            requiredLevel: 1500
         },
         {
             name: '몬크라스 대거',
@@ -840,6 +858,23 @@ export class ItemPreset {
                 new Option('자연 재생', { lifeRegen: 1500 })
             ],
             requiredLevel: 1200
+        },
+        {
+            name: '오버플로우',
+            type: '장신구',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.ACCESSORY),
+            attributeModifiers: [
+                new AttributeModifier(true, AttributeType.MAX_FOOD, 1.4),
+                new AttributeModifier(true, AttributeType.MAX_WATER, 1.4),
+                new AttributeModifier(false, AttributeType.INVENTORY_SPACE, 10),
+            ],
+            durability: 2000,
+            options: [
+                new Option('자연 재생', { lifeRegen: 1500 }),
+                new Option('잠재적 정신력', { manaRegen: 1000 }),
+            ],
+            requiredLevel: 1700
         },
         {
             name: '크산디르 소드',
@@ -1110,6 +1145,29 @@ export class ItemPreset {
             maxCount: 20
         },
         {
+            name: '버려진 설계도',
+            type: '잡화',
+            maxCount: 20
+        },
+        {
+            name: '마스터키',
+            type: '잡화',
+            maxCount: 1
+        },
+        {
+            name: '주술사 전직서',
+            type: '전직서',
+            maxCount: 1,
+            onUse: Item.CLASS_CHANCE_USE_EVENT('주술사', 
+                p => p.hadClass('마법사') && p.level >= 550, '[ 마법사 계열의 550레벨 이상 플레이어만 전직할 수 있습니다! ]'),
+            getDescription: item => '주의 : 이 전직서를 사용하면 마법사 계열의 일부 스킬을 박탈당할 수 있습니다.',
+        },
+        {
+            name: '치트 엔진',
+            type: '잡화',
+            maxCount: 20
+        },
+        {
             name: '정화된 영혼조각',
             type: '잡화',
             maxCount: 20,
@@ -1139,9 +1197,21 @@ export class ItemPreset {
             maxCount: 10,
         },
         {
+            name: '아다만티움 원석',
+            type: '제련',
+            smeltResult: '제련된 아다만티움',
+            maxCount: 10,
+        },
+        {
             name: '굳은 티타늄',
             type: '제련',
             smeltResult: '제련된 티타늄',
+            maxCount: 10,
+        },
+        {
+            name: '굳은 아다만티움',
+            type: '제련',
+            smeltResult: '제련된 아다만티움',
             maxCount: 10,
         },
         {
@@ -1173,6 +1243,29 @@ export class ItemPreset {
                     else {
                         if(moveSpeedModifier.value < 0) 
                             moveSpeedModifier.value = Utils.lerp(moveSpeedModifier.value, 0, 0.3);
+                    }
+                }
+            },
+            type: '단조',
+            maxCount: 10
+        },
+        {
+            name: '제련된 아다만티움',
+            forgePrefix: '아다만티움',
+            onForge: (item, efficiency) => {
+                if(item.maxDurability) item.maxDurability *= 1.6;
+                if(item.durability) item.durability *= 1.6;
+                if(item.attributeModifiers.some(m => m.type === AttributeType.ATTACK)) 
+                    item.attributeModifiers.push(new AttributeModifier(true, AttributeType.ATTACK, 1.25));
+                const moveSpeedModifiers = item.attributeModifiers.filter(m => m.type === AttributeType.MOVE_SPEED);
+                for(let moveSpeedModifier of moveSpeedModifiers) {
+                    if(moveSpeedModifier.isMultiplier) {
+                        if(moveSpeedModifier.value < 1) 
+                            moveSpeedModifier.value = Utils.lerp(moveSpeedModifier.value, 1, 0.8);
+                    }
+                    else {
+                        if(moveSpeedModifier.value < 0) 
+                            moveSpeedModifier.value = Utils.lerp(moveSpeedModifier.value, 0, 0.7);
                     }
                 }
             },
@@ -1502,9 +1595,11 @@ export class ItemPreset {
             type: '소모',
             getDescription: () => '섭취시 마나가 10000 증가하며, 3분동안 마법 공격력이 50% 증가합니다.',
             onUse: (player, index) => {
-                Item.MANA_USE_EVENT({ mana: 10000, delay: 2, delayMessage: '[ 꿀꺽 꿀꺽... ]' }).call(this, player, index);
-                player.addEffect(new Effect(EffectType.ENHANCE_MAGIC, 10, 3 * 60));
-                player.sendRawMessage('[ 3분동안 마법 공격력이 50% 증가합니다. ]');
+                Item.MANA_USE_EVENT({ mana: 10000, delay: 2, delayMessage: '[ 꿀꺽 꿀꺽... ]' })(player, index);
+                player.inventory.delayTask(() => {
+                    player.addEffect(new Effect(EffectType.ENHANCE_MAGIC, 10, 3 * 60));
+                    player.sendRawMessage('[ 3분동안 마법 공격력이 50% 증가합니다. ]');
+                }, 0);
             },
             maxCount: 50
         },

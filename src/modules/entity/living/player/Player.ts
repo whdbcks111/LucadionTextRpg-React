@@ -437,6 +437,13 @@ export class Player extends LivingEntity {
         return this.getLocation().npcs.some(npc => npc.target === this);
     }
 
+    static get isHotTime() {
+        let date = new Date();
+        let koreaNow = date.getTime() + date.getTimezoneOffset() * 60 * 1000 + 9 * 60 * 60 * 1000;
+        let hour = new Date(koreaNow).getHours();
+        return 21 <= hour || hour <= 3;
+    }
+
     loggedFreeUpdate() {
         if(this.karma > 0) this.karma -= 0.003 * Time.deltaTime;
         else this.karma = 0;
@@ -454,7 +461,9 @@ export class Player extends LivingEntity {
             this.isLoggedIn = false;
 
         let expMultiplier = 1;
-        if(this.level >= 1000) expMultiplier = 0.1;
+        if(this.level >= 2500) expMultiplier = 0.4;
+        else if(this.level >= 1500) expMultiplier = 0.6;
+        else if(this.level >= 1000) expMultiplier = 0.25;
         else if(this.level >= 700) expMultiplier = 0.29;
         else if(this.level >= 300) expMultiplier = 0.3;
         else if(this.level >= 295) expMultiplier = 0.1;
@@ -464,6 +473,9 @@ export class Player extends LivingEntity {
         else if(this.level >= 150) expMultiplier = 0.4;
         else if(this.level >= 90) expMultiplier = 0.45;
         else if(this.level >= 50) expMultiplier = 0.5;
+
+        if(Player.isHotTime) expMultiplier *= 2;
+
         this.attribute.multiplyValue(AttributeType.EXP_EFFCIENECY, expMultiplier);
 
         Title.list.forEach(title => {
@@ -749,6 +761,14 @@ export class Player extends LivingEntity {
 
         this.skills.push(new Skill(name));
         if(doSendMessage) this.sendRawMessage(`[ 스킬 [ ${name} ] (을)를 깨달으셨습니다! ]`);
+    }
+
+    removeSkill(name: string) {
+        let preset = SkillPreset.getSkillPreset(name);
+        if(!preset || this.skills.every(skill => skill.name !== name)) return;
+
+        this.skills = this.skills.filter(s => s.name !== name);
+        this.sendRawMessage(`[ 스킬 [ ${name} ] (을)를 박탈당했습니다! ]`);
     }
 
     getGettingExp(entity: Entity) {

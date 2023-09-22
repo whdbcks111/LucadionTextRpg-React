@@ -357,9 +357,67 @@ export class World {
         }),
         new Location('폴루토스 던전 - 6', -2800, -37, 3300, {
             zoneType: ZoneType.NEUTRAL,
-            getMovable: loc => ['폴루토스 던전 - 5'],
+            getMovable: loc => ['폴루토스 던전 - 5', '폴루토스 던전 - 7'],
             objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('메카닉 크로우'), 3)
                 .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 5)))
+        }),
+        new Location('폴루토스 던전 - 7', -3000, -37, 3300, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 6', '폴루토스 던전 - 8'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 3)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 5)))
+        }),
+        new Location('폴루토스 던전 - 8', -3300, -57, 3300, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 7', '폴루토스 던전 - 9', '폴루토스 던전 - 10'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 1)))
+        }),
+        new Location('폴루토스 던전 - 9', -3400, -57, 3000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 8'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 1)))
+        }),
+        new Location('폴루토스 던전 - 10', -3400, -57, 3500, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 8', '폴루토스 던전 - 11'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('하이퍼포포스'), 1)))
+        }),
+        new Location('폴루토스 던전 - 11', -3400, -57, 4000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 10', '폴루토스 던전 - 12'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('안티에고이스트'), 1)))
+        }),
+        new Location('폴루토스 던전 - 12', -3600, -57, 4000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 11', '폴루토스 던전 - 13'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('안티에고이스트'), 1)))
+        }),
+        new Location('폴루토스 던전 - 13', -3800, -57, 4000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 12', '폴루토스 던전 - 14'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('안티에고이스트'), 1)))
+        }),
+        new Location('폴루토스 던전 - 14', -4000, -57, 4000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 13', '폴루토스 던전 - 15'],
+            objects: Utils.shuffle(Utils.repeat<Monster>(() => Monster.fromName('디 엔드리스 프랙처'), 4)
+                .concat(Utils.repeat<Monster>(() => Monster.fromName('안티에고이스트'), 1)))
+        }),
+        new Location('폴루토스 던전 - 15', -4000, -100, 4000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 14', '폴루토스 던전 - 설계의 저편'],
+            objects: Utils.repeat<Monster>(() => Monster.fromName('안티에고이스트'), 2)
+        }),
+        new Location('폴루토스 던전 - 설계의 저편', -4000, -400, 4000, {
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['폴루토스 던전 - 15'],
+            objects: [Monster.fromName('역설의 꼭두각시, 폴루토스')]
         }),
         new Location('폴루토스 던전 - 수상한 상점', -2550, -15, 2800, {
             zoneType: ZoneType.NEUTRAL,
@@ -402,7 +460,7 @@ export class World {
                         npc.choices = [
                             new NpcChoice('...', 4)
                         ];
-                    }
+                    } 
                 ])
             ]
         }),

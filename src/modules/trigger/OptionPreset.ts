@@ -136,6 +136,19 @@ export class OptionPreset {
             },
         },
         {
+            name: '잠재적 정신력',
+            getDescription: option => (
+                `10초간 피격받거나 공격하지 않으면, ${Utils.asSubjective(AttributeType.MANA_REGEN.displayName)} ` +
+                `${option.extras.manaRegen ?? 1}만큼 늘어납니다.`
+            ),
+            onUpdate(option, self) {
+                let now = Date.now();
+                if(now - self.latestAttack > 1000 * 10 && now - self.latestHitted > 1000 * 10) {
+                    self.attribute.addValue(AttributeType.MANA_REGEN, option.extras.manaRegen ?? 1);
+                }
+            },
+        },
+        {
             name: '흑염',
             getDescription: option => (
                 `대상을 공격하면 ${Utils.toFixed((option.extras.chance ?? 1) * 100, 2)}%의 확률로 ${option.extras.level ?? 1}레벨의 ` +

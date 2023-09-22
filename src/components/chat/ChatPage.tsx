@@ -213,7 +213,7 @@ function ChatPage() {
 
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [isSlideMenuOpened, hideFullMessage, send]);
+    }, [isSlideMenuOpened, hideFullMessage, send, options.keywords]);
 
     useEffect(() => {
 
@@ -356,7 +356,7 @@ function ChatPage() {
             socketClient.off('previous-chats');
             socketClient.off('ping');
         };
-    }, [chatList, socketClient, navigate]);
+    }, [chatList, socketClient, navigate, pingData?.currentRoom]);
     
     useEffect(() => {
 
@@ -406,6 +406,12 @@ function ChatPage() {
             ]} />
             <div className='chat-top-bar'>
                 <div className='room-name'>
+                    {
+                        pingData?.isHotTime ? 
+                        <span className='hot-time-text'>
+                            {"🔥핫타임🔥"}
+                        </span> : <></>
+                    }
                     {pingData?.currentRoomName ?? ''}
                     <UserCount roomUserCount={pingData?.roomUserCount ?? 1}/>
                 </div>
@@ -505,7 +511,7 @@ function ChatPage() {
                 <div className='upload-image' style={{
                     backgroundImage: 'url(/clip_icon.png)'
                 }} onClick={_ => imageUploadInput.current?.click()} />
-                <div contentEditable='true' className='chat-input' ref={chatInput}/>
+                <div contentEditable='true' className={'chat-input' + ((pingData.level ?? 0) < 20 ? ' help' : '')} ref={chatInput}/>
                 <div className='chat-send' onClick={send}>전송</div>
             </div>
             <ChatSlideMenu

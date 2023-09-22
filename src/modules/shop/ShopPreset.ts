@@ -565,6 +565,14 @@ export class ShopPreset {
                     },
                     count: 3
                 },
+                {
+                    name: '엔드 오브 어비스',
+                    cost: 400000,
+                    createItem: buyItem => {
+                        return Item.fromName(buyItem.name);
+                    },
+                    count: 2
+                },
             ],
             sellList: [
                 {

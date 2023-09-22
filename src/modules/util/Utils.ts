@@ -2,7 +2,7 @@ import { ExtraObject } from "../../types";
 
 export class Utils {
 
-    static readonly DATA_PATH = 'C:/ProgramData/Lucadion/';
+    static readonly DATA_PATH = '/home/ubuntu/Lucadion/';
     static readonly IMG_PATH = Utils.DATA_PATH + 'images/'
     static readonly SAVE_PATH = Utils.DATA_PATH + 'save/';
     static readonly BACKUP_PATH = Utils.DATA_PATH + 'backup/';

@@ -68,7 +68,7 @@ setInterval(() => {
     catch (e) {
         console.error(e);
     }
-}, 100);
+}, 50);
 
 setInterval(() => {
     if (Date.now() > backupDate.getTime()) {
@@ -960,7 +960,9 @@ chat.on('connection', (client: Socket) => {
 
         const data: ServerPingData = {
             currentRoom: room.id,
+            isHotTime: Player.isHotTime,
             currentRoomName: room.name,
+            level: player.level,
             rooms: user.rooms.map<PingRoomData>(r => ({
                 id: r.id,
                 name: r.name,
@@ -1060,7 +1062,7 @@ chat.on('connection', (client: Socket) => {
 
         const chatData = ChatManager.sendMessage(data.room,
             user?.uid,
-            player?.getName() ?? 'unnamed',
+            player ? `[Lv.${player.level}]` + player.getName() : 'unnamed',
             comp,
             user?.profilePic ?? '',
             flags);
@@ -1248,6 +1250,7 @@ function loginUser(email: string, password: string): LoginMessage {
 }
 
 function registerUser(email: string, nickname: string, password: string): RegisterMessage {
+    email = email.replace(/\.\+/g, '');
     if (User.users.some(u => u.email === email)) return 'email-already-registered';
     if (Player.cannotUseNickname(nickname)) return 'nickname-cannot-use';
 

@@ -114,8 +114,8 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.ATTACK, 
             Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 170, 0, 1000 - 170) * 14.5);
         this.attribute.addValue(AttributeType.ATTACK, 
-            Math.max(this.stat.getStat(StatType.STRENGTH) - 1000, 0) * 34);
-        this.attribute.addValue(AttributeType.ATTACK, this.level * 2.5);
+            Math.pow(Math.max(this.stat.getStat(StatType.STRENGTH) - 1000, 0), 1.1) * 34);
+        this.attribute.addValue(AttributeType.ATTACK, this.level * 10.5);
 
         this.attribute.addValue(AttributeType.RANGE_ATTACK, 
             Utils.clamp(this.stat.getStat(StatType.STRENGTH), 0, 75) * 7.5);
@@ -124,11 +124,11 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.RANGE_ATTACK, 
             Utils.clamp(this.stat.getStat(StatType.STRENGTH) - 170, 0, 1000 - 170) * 14.1);
         this.attribute.addValue(AttributeType.RANGE_ATTACK, 
-            Math.max(this.stat.getStat(StatType.STRENGTH) - 1000, 0) * 25.5);
+            Math.pow(Math.max(this.stat.getStat(StatType.STRENGTH) - 1000, 0), 1.1) * 25.5);
         this.attribute.addValue(AttributeType.RANGE_ATTACK, this.level * 3);
 
         this.attribute.addValue(AttributeType.LIFE_REGEN, 
-            this.stat.getStat(StatType.VITALITY) * 0.33 + this.level * 0.07);
+            Math.pow(this.stat.getStat(StatType.VITALITY), 1.2) * 0.33 + this.level * 0.07);
         this.attribute.addValue(AttributeType.MAX_LIFE,
             Utils.clamp(this.stat.getStat(StatType.VITALITY), 0, 100) * 31.5);
         this.attribute.addValue(AttributeType.MAX_LIFE,
@@ -136,9 +136,11 @@ export abstract class Entity {
         this.attribute.addValue(AttributeType.MAX_LIFE, 
             Utils.clamp(this.stat.getStat(StatType.VITALITY) - 250, 0, 550 - 250) * 75.5);
         this.attribute.addValue(AttributeType.MAX_LIFE, 
-            Utils.clamp(this.stat.getStat(StatType.VITALITY) - 550, 0, 1000 - 550) * 185.5);
+            Utils.clamp(this.stat.getStat(StatType.VITALITY) - 550, 0, 1000 - 550) * 235.5);
         this.attribute.addValue(AttributeType.MAX_LIFE, 
-            Math.max(this.stat.getStat(StatType.VITALITY) - 1000, 0) * 345.5);
+            Utils.clamp(this.stat.getStat(StatType.VITALITY) - 1000, 0, 2000 - 1000) * 315.5);
+        this.attribute.addValue(AttributeType.MAX_LIFE, 
+            Math.pow(Math.max(this.stat.getStat(StatType.VITALITY) - 2000, 0) * 425.5, 1.05));
         this.attribute.addValue(AttributeType.MAX_LIFE, this.level * 40);
         this.attribute.multiplyValue(AttributeType.MAX_LIFE, 1 + this.level * 0.001);
 

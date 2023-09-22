@@ -25,6 +25,7 @@
     "nedb": "^1.8.0",
     "nodemailer": "^6.8.0",
     "nodemon": "^2.0.21",
+    "npm": "^9.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",
@@ -45,9 +46,9 @@
     ]
   },
   "scripts": {
-    "start": "set PORT=443&&set HTTPS=true&&set SSL_CRT_FILE=./ssl/certificate.crt&&set SSL_KEY_FILE=./ssl/private.key&&react-scripts start",
+    "start": "export PORT=443&&export HTTPS=true&&export SSL_CRT_FILE=/etc/letsencrypt/live/lucadion.mcv.kr/fullchain.pem&&export SSL_KEY_FILE=/etc/letsencrypt/live/lucadion.mcv.kr/privkey.pem&&react-scripts start",
     "server": "nodemon --signal SIGINT ./src/server.ts",
-    "build": "set PORT=443&&set HTTPS=true&&set SSL_CRT_FILE=./ssl/certificate.crt&&set SSL_KEY_FILE=./ssl/private.key&&react-scripts build&&serve -s build",
+    "build": "export PORT=443&&export HTTPS=true&&export SSL_CRT_FILE=./ssl/certificate.crt&&export SSL_KEY_FILE=./ssl/private.key&&react-scripts build&&serve -s build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

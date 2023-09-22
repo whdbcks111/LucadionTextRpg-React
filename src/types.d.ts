@@ -181,6 +181,7 @@ export interface PingRoomData {
 export interface ServerPingData {
     playerLife?: number;
     targetLife?: number;
+    level?: number;
     currentRoom?: string;
     currentRoomName?: string;
     rooms?: PingRoomData[];
@@ -191,6 +192,7 @@ export interface ServerPingData {
     cooldowns?: [string, number][];
     currentActionBar?: MessageComponent | null;
     attackSpeedProgress?: number;
+    isHotTime?: boolean;
 }
 
 export type LoginMessage = 

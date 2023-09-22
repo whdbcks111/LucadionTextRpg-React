@@ -15,6 +15,8 @@ export function sendMail(to: string, subject: string, contentHtml: string) {
         to,
         subject: '[Lucadion RPG] ' + subject,
         html: contentHtml
+    }, (err, info) => {
+        if(err) console.error("Email error occured!");
     });
     return true;
 }

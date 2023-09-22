@@ -84,6 +84,32 @@ export class CraftRecipe {
             return result;
           }
         ),
+        new CraftRecipe('마스터키', '치트 엔진 1개, 푸른 심장 1개, 제련된 아다만티움 5개',
+          p => p.inventory.hasItem(i => i.name === '치트 엔진', 1) && 
+            p.inventory.hasItem(i => i.name === '푸른 심장', 1) && 
+            p.inventory.hasItem(i => i.name === '제련된 아다만티움', 5),
+          p => {
+            let result = [];
+            p.inventory.removeItem(i => i.name === '치트 엔진', 1);
+            p.inventory.removeItem(i => i.name === '푸른 심장', 1);
+            p.inventory.removeItem(i => i.name === '제련된 아다만티움', 5);
+            result.push(new ItemStack(Item.fromName('마스터키'), 1));
+            return result;
+          }
+        ),
+        new CraftRecipe('주술사 전직서', '마스터키 1개, 거미 눈 10개, 버려진 설계도 5개',
+          p => p.inventory.hasItem(i => i.name === '마스터키', 1) && 
+            p.inventory.hasItem(i => i.name === '거미 눈', 10) && 
+            p.inventory.hasItem(i => i.name === '버려진 설계도', 5),
+          p => {
+            let result = [];
+            p.inventory.removeItem(i => i.name === '마스터키', 1);
+            p.inventory.removeItem(i => i.name === '거미 눈', 10);
+            p.inventory.removeItem(i => i.name === '버려진 설계도', 5);
+            result.push(new ItemStack(Item.fromName('주술사 전직서'), 1));
+            return result;
+          }
+        ),
         new CraftRecipe('나무 막대기', '목재 재질 아이템 1개',
           p => p.inventory.hasItem(i => i.includesMaterial(Material.WOOD), 1),
           p => {

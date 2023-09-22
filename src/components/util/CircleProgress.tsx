@@ -1,4 +1,4 @@
-import React, { CSSProperties, memo } from "react";
+import React, { memo } from "react";
 
 interface IProps {
     size: string;

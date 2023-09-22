@@ -1626,7 +1626,7 @@ export class MonsterPreset {
                 attack: '+40%',
                 defendPenetrate: '+20000',
                 magicResistance: '+20000',
-                maxLife: '+50%',
+                maxLife: '+20%',
                 attackSpeed: '-60%',
             },
             stat: {
@@ -1712,7 +1712,7 @@ export class MonsterPreset {
                 defend: '+30000',
                 defendPenetrate: '+30000',
                 magicResistance: '+50000',
-                maxLife: '+50%',
+                maxLife: '+20%',
             },
             stat: {
                 vitality: 3400,
@@ -1873,7 +1873,7 @@ export class MonsterPreset {
             attributes: {
                 attack: '+50%',
                 magicResistance: '-10000',
-                maxLife: '+300000+50%',
+                maxLife: '+300000+20%',
             },
             stat: {
                 vitality: 2740,
@@ -1940,6 +1940,305 @@ export class MonsterPreset {
             },
             drops: [
                 new DropItem('굳은 티타늄', 1, 2, 0.5),
+            ]
+        },
+        {
+            name: '디 엔드리스 프랙처',
+            level: 2155,
+            regenTime: 60 * 6,
+            gold: 2570,
+            types: [MonsterType.HUMANOID, MonsterType.METAL],
+            tendency: MonsterTendency.NEUTRAL,
+            attributes: {
+                attack: '+50%',
+                magicResistance: '-10000',
+                maxLife: '+300000+20%',
+            },
+            stat: {
+                vitality: 2740,
+                strength: 950,
+                agility: 1600,
+                sense: 600
+            },
+            onHitted(monster, attacker) {
+                if(!monster.extras.usedShield) {
+                    monster.extras.usedShield = true;
+                }
+            },
+            onUpdate: monster => {
+                let players = monster.getLocation().getPlayers(true);
+                if (players.length === 0) 
+                    monster.extras.start = false;
+                else {
+                    players.forEach(p => p.addEffect(new Effect(EffectType.EXPOSE, 16, 1)));
+                }
+                if (!monster.extras.start) {
+                    monster.extras.start = true;
+                    monster.life = monster.maxLife;
+                    monster.extras.latestShot = Date.now() - 1000 * 8;
+                    monster.extras.latestSpawn = 0;
+                    monster.extras.latestAirborne = 0;
+                }
+                if (monster.targets.size > 0
+                    && monster.isAttackEnded) {
+                    let target = monster.target;
+                    if (target) monster.attack(target, {
+                        onHit: victim => {
+                            if (victim instanceof LivingEntity) {
+                                victim.addEffect(new Effect(EffectType.DECREASE_DEFEND, 20, 3));
+                                if(Date.now() - monster.extras.latestAirborne > 1000 * 5 && Math.random() < 0.7) {
+                                    victim.addEffect(new Effect(EffectType.BLOOD, 100, 4.5));
+                                } 
+                            } 
+                        }
+                    });
+                }
+                if (monster.targets.size > 0 && Date.now() - monster.extras.latestShot > 1000 * 10 && monster.canUseSkill) {
+                    let target = monster.target;
+                    let pr = new Projectile({
+                        name: '트리플 나이핑',
+                        owner: monster,
+                        attributes: {
+                            magicAttack: monster.attribute.getValue(AttributeType.ATTACK) * 2.65
+                        },
+                        onHit: (projectile, victim) => {
+                            if (victim instanceof LivingEntity){
+                                victim.addEffect(new Effect(EffectType.BLOOD, 150, 2));
+                            } 
+                        }
+                    });
+
+                    if (target) {
+                        for(let i = 0; i < 3; i++)
+                            pr.attack(target, {
+                                isMagicAttack: true,
+                                isFixedAttack: true,
+                                absoluteHit: true
+                            });
+                    }
+                        
+
+                    monster.extras.latestShot = Date.now();
+                }
+            },
+            drops: [
+                new DropItem('굳은 아다만티움', 1, 1, 0.3),
+            ]
+        },
+        {
+            name: '역설의 꼭두각시, 폴루토스',
+            types: [MonsterType.GOLEM, MonsterType.METAL, MonsterType.HUMANOID],
+            tendency: MonsterTendency.HOSTILE,
+            level: 4000,
+            regenTime: 60 * 30,
+            attributes: {
+                defend: '+90000',
+                magicResistance: '+90000',
+                maxLife: '+20000000+130%'
+            },
+            stat: {
+                vitality: 7000,
+                agility: 5000,
+                sense: 300,
+                spell: 700
+            },
+            onUpdate: monster => {
+                if (monster.getLocation() && monster.getLocation().getPlayers(true).length === 0) monster.extras.start = false;
+                if (!monster.extras.start) {
+                    monster.extras.start = true;
+                    monster.extras.magicCount = 0;
+                    monster.extras.phase = 0;
+                    monster.extras.overmaster = false;
+                }
+
+                if (monster.getLocation() && !monster.extras.overmaster && monster.targets.size > 0 && monster.currentTarget) {
+                    monster.extras.overmaster = true;
+                    let players = monster.getLocation().getPlayers(true);
+                    Player.sendGroupRawMessage(players, '[ 폴루토스가 스킬 [ 안티테제 ] 을 사용했다! ]\n' +
+                        '이곳에 \'사용자\'가 오는건 오랜만이군요, 반갑습니다. 하지만 곧 떠나셔야겠습니다.');
+                    players.forEach(p => {
+                        p.addEffect(new Effect(EffectType.OVERMASTER, 400, 4.5, monster));
+                    });
+                }
+
+                if (monster.getLocation() && monster.life < monster.maxLife * 0.5 && monster.extras.phase === 0) {
+                    monster.life = monster.maxLife * 0.7;
+                    monster.extras.phase = 1;
+                    let players = monster.getLocation().getPlayers(true);
+                    Player.sendGroupRawMessage(players, '[ <SYSTEM> [개체명: 폴루토스]가 \'오버클럭\'에 돌입했습니다. ]');
+                    players.forEach(p => {
+                        p.addEffect(new Effect(EffectType.STUN, 1, 3, monster));
+                        p.addEffect(new Effect(EffectType.BLOOD, 500, 10, monster));
+                        p.addEffect(new Effect(EffectType.DECREASE_HEAL_EFFICIENCY, 400, 50, monster));
+                    });
+                }
+
+                if(monster.extras.phase > 0) {
+                    monster.attribute.addValue(AttributeType.MAGIC_ATTACK, 4000 * 13);
+                    monster.attribute.addValue(AttributeType.CRITICAL_DAMAGE, -2);
+                }
+
+                if (monster.getLocation() && monster.targets.size > 0
+                    && Date.now() - monster.latestAttack >= 3 * 1000 && Date.now() - monster.extras.overmaster > 1000 * 3) {
+                    let projectile: Projectile;
+                    let players = monster.getLocation().getPlayers(true);
+                    let target = monster.target;
+                    switch (Math.floor(Math.random() * 3)) {
+                        case 0:
+                            projectile = new Projectile({
+                                name: '미싱링커',
+                                owner: monster,
+                                attributes: {
+                                    attack: 600000 + monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 0.8 + (target?.life ?? 0) * 0.1,
+                                    moveSpeed: 70000
+                                },
+                                onHit: (projectile, victim) => {
+                                    if (victim instanceof LivingEntity) {
+                                        victim.addEffect(new Effect(EffectType.FEAR, 400, 1, monster));
+                                        victim.addEffect(new Effect(EffectType.DECREASE_HEAL_EFFICIENCY, 40, 5, monster));
+                                    }
+                                }
+                            });
+                            if (target) projectile.attack(target, {
+                                isFixedAttack: true,
+                                applyAttackSpeed: true
+                            });
+                            break;
+                        case 1:
+                            projectile = new Projectile({
+                                name: '세퍼레이터',
+                                owner: monster,
+                                attributes: {
+                                    attack: 90000 + monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 1.4,
+                                    moveSpeed: 70000
+                                },
+                                onHit: (projectile, victim) => {
+                                    if (victim instanceof LivingEntity) {
+                                        victim.addEffect(new Effect(EffectType.BLOOD, 400, 6, monster));
+                                    }
+                                }
+                            });
+                            players.forEach(p => {
+                                projectile.attack(p, {
+                                    isFixedAttack: true,
+                                    applyAttackSpeed: true
+                                });
+                            });
+                            break;
+                        case 2:
+                            projectile = new Projectile({
+                                name: '샤이닝 오퍼레이션',
+                                owner: monster,
+                                attributes: {
+                                    magicAttack: 700000 + monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 8.9,
+                                    moveSpeed: 3000000000
+                                },
+                                onHit: (projectile, victim) => {
+                                    if (victim instanceof LivingEntity) {
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.BLINDNESS, 400, 2, monster));
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.SLOWNESS, 5, 10, monster));
+                                    }
+                                }
+                            });
+                            players.forEach(p => {
+                                if (target) projectile.attack(p, {
+                                    isMagicAttack: true,
+                                    applyAttackSpeed: true
+                                });
+                            });
+                            break;
+                    }
+                }
+            },
+            drops: [
+                new DropItem('치트 엔진', 1, 1, 0.1),
+                new DropItem('오버플로우', 1, 1, 0.3),
+                new DropItem('버려진 설계도', 1, 1, 0.4),
+            ],
+            gold: 44444
+        },
+        {
+            name: '안티에고이스트',
+            level: 2390,
+            regenTime: 60 * 6,
+            gold: 2570,
+            types: [MonsterType.HUMANOID, MonsterType.METAL],
+            tendency: MonsterTendency.HOSTILE,
+            attributes: {
+                attack: '+50%',
+                defend: '+20000',
+                magicResistance: '-20000',
+                maxLife: '+300000+20%',
+            },
+            stat: {
+                vitality: 3150,
+                strength: 950,
+                agility: 1600,
+                sense: 600
+            },
+            onHitted(monster, attacker) {
+                if(!monster.extras.usedShield) {
+                    monster.extras.usedShield = true;
+                }
+            },
+            onUpdate: monster => {
+                let players = monster.getLocation().getPlayers(true);
+                if (players.length === 0) 
+                    monster.extras.start = false;
+                else {
+                    players.forEach(p => p.addEffect(new Effect(EffectType.EXPOSE, 16, 1)));
+                }
+                if (!monster.extras.start) {
+                    monster.extras.start = true;
+                    monster.life = monster.maxLife;
+                    monster.extras.latestShot = Date.now() - 1000 * 8;
+                    monster.extras.latestSpawn = 0;
+                    monster.extras.latestAirborne = 0;
+                }
+                if (monster.targets.size > 0
+                    && monster.isAttackEnded) {
+                    let target = monster.target;
+                    if (target) monster.attack(target, {
+                        onHit: victim => {
+                            if (victim instanceof LivingEntity) {
+                                victim.addEffect(new Effect(EffectType.DECREASE_DEFEND, 20, 3));
+                                if(Date.now() - monster.extras.latestAirborne > 1000 * 5 && Math.random() < 0.7) {
+                                    victim.addEffect(new Effect(EffectType.BLOOD, 100, 4.5));
+                                } 
+                            } 
+                        }
+                    });
+                }
+                if (monster.targets.size > 0 && Date.now() - monster.extras.latestShot > 1000 * 10 && monster.canUseSkill) {
+                    let target = monster.target;
+                    let pr = new Projectile({
+                        name: '부정의 역십자',
+                        owner: monster,
+                        attributes: {
+                            magicAttack: monster.attribute.getValue(AttributeType.ATTACK) * 3.25
+                        },
+                        onHit: (projectile, victim) => {
+                            if (victim instanceof LivingEntity){
+                                victim.addEffect(new Effect(EffectType.BLOOD, 550, 5));
+                            } 
+                        }
+                    });
+
+                    if (target) {
+                        for(let i = 0; i < 2; i++)
+                            pr.attack(target, {
+                                isMagicAttack: true,
+                                isFixedAttack: true,
+                                absoluteHit: true
+                            });
+                    }
+                        
+
+                    monster.extras.latestShot = Date.now();
+                }
+            },
+            drops: [
+                new DropItem('굳은 아다만티움', 1, 1, 0.3),
             ]
         },
         {

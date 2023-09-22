@@ -67,7 +67,7 @@ export class CharacterClass {
             .setEnhancedClassName('광전사'),
 
         new CharacterClass('광전사', 
-            `${Utils.asSubjective(AttributeType.MAX_LIFE.displayName)} 25% 증가합니다.\n` +
+            `${Utils.asSubjective(AttributeType.MAX_LIFE.displayName)} 45% 증가합니다.\n` +
             `또한 잃은 생명력에 비례해서 ${
                 Utils.asSubjective(AttributeType.ATTACK.displayName)} 최소 20% ~ 최대 60%까지 증가합니다.`, p => {})
             .setCanChangeClass(p => (
@@ -75,7 +75,7 @@ export class CharacterClass {
             ))
             .setTrigger(new Trigger({
                 onUpdate(p) {
-                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.25);
+                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.45);
                     p.attribute.multiplyValue(AttributeType.ATTACK, 1.2 + 0.4 * ((p.maxLife - p.life) / p.maxLife));
                 }
             })),
@@ -131,6 +131,16 @@ export class CharacterClass {
                 },
             }))
             .setEnhancedClassName('그랜드 메이지'),
+
+        new CharacterClass('주술사', `${AttributeType.MAGIC_ATTACK.asSubjective()} 35% 증가합니다.`, p => {
+            p.removeSkill('주문 조합');
+            p.removeSkill('명상');
+        })
+            .setTrigger(new Trigger({
+                onUpdate(p) {
+                    p.attribute.multiplyValue(AttributeType.MAGIC_ATTACK, 1.35);
+                },
+            })),
 
         new CharacterClass('그랜드 메이지', `${AttributeType.MAGIC_ATTACK.asSubjective()} 19% 증가합니다.\n` + 
             `또한 ${AttributeType.MAGIC_PENETRATE.asSubjective()} 30% 증가합니다.`, p => {})

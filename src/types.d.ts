@@ -180,12 +180,14 @@ export interface PingRoomData {
 
 export interface ServerPingData {
     playerLife?: number;
+    playerMana?: number;
     targetLife?: number;
     level?: number;
     currentRoom?: string;
     currentRoomName?: string;
     rooms?: PingRoomData[];
     profilePic?: NullableString;
+    mapLocNames?: string[];
     mapPlayerNames?: string[];
     roomUserCount?: number;
     totalUserCount?: number;

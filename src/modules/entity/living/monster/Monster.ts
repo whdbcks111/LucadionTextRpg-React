@@ -101,7 +101,7 @@ export class Monster extends LivingEntity {
             let players = loc.getPlayers();
             if (players.length > 0) this.targets.add(Utils.pick(players));
         }
-        else if (this.tendency === MonsterTendency.NEUTRAL && 
+        if (this.tendency !== MonsterTendency.PEACEFUL && 
             this.currentTarget instanceof LivingEntity &&
             !this.targets.has(this.currentTarget)) {
             this.targets.add(this.currentTarget);

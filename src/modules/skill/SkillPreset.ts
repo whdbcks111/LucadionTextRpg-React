@@ -129,8 +129,8 @@ export class SkillPreset {
             calcValues: (skill, p) => ({ 
                 manaCost: skill.level * 10 + 55, //mana cost
                 penetrateIncrease: skill.level * 10 + 100, //penetrate increase
-                poisonLevel: Math.floor(skill.level * 2.5 + 5), //poison level
-                decreaseDefendLevel: Math.floor(skill.level * 0.5 + 5), //poison level
+                poisonLevel: Math.floor(skill.level * 3.5 + 5), //poison level
+                decreaseDefendLevel: Math.floor(skill.level * 1.5 + 5), //poison level
                 effectTime: 20, //poison time
                 profAddition: Math.max(6.1 - skill.level * .25, .25), //prof addition
             }),
@@ -2008,7 +2008,7 @@ export class SkillPreset {
                         name: '신성한 십자가',
                         owner: p,
                         attributes: {
-                            magicAttack: p.attribute.getValue(AttributeType.ATTACK) * skill.getValue(p, 'increase') / 100
+                            magicAttack: p.attribute.getValue(AttributeType.MAGIC_ATTACK) * skill.getValue(p, 'increase') / 100
                         },
                         onHit(_, victim) {
                             if(victim instanceof LivingEntity) 
@@ -2416,14 +2416,14 @@ export class SkillPreset {
             maxLevel: 20,
             checkRealizeCondition: p => p.hadClass('세인티스 팔라딘'),
             calcValues: (skill, p) => ({
-                cost: skill.level * 107,
+                cost: skill.level * 57,
                 increase: 150,
-                maxLifeRate: 20,
+                maxLifeRate: 10,
                 effectTime: 5 + skill.level * 0.3,
                 effectLevel: 18 + skill.level * 2,
                 profAddition: Math.max(1, 3.6 - skill.level * 0.1)
             }),
-            getCooldown: (skill, p) => Math.max(5, 15 - skill.level * 0.6),
+            getCooldown: (skill, p) => Math.max(5, 10 - skill.level * 0.3),
             getCostMessage: (skill, p) => `${Utils.toFixed(skill.getValue(p, 'cost'), 1)}마나`,
             getCostFailMessage: (skill, p) => '마나가 부족합니다.',
             canTakeCost: (skill, p) => p.mana >= skill.getValue(p, 'cost'),
@@ -2450,7 +2450,7 @@ export class SkillPreset {
                     attributes: {
                         magicAttack: p.attribute.getValue(AttributeType.MAX_LIFE) * skill.getValue(p, 'maxLifeRate') / 100 +
                             p.attribute.getValue(AttributeType.MAGIC_ATTACK) * skill.getValue(p, 'increase') / 100 ,
-                        moveSpeed: 2500 + p.level * 10
+                        moveSpeed: 2500 + p.level * 100
                     },
                     onHit(_, victim) {
                         if(victim instanceof LivingEntity) victim.addEffect(
@@ -2885,12 +2885,12 @@ export class SkillPreset {
             checkRealizeCondition: p => p.hadClass('세인티스 팔라딘'),
             calcValues: (skill, p) => ({
                 cost: 100 + skill.level * 8,
-                increase: 90,
-                base: 303 + skill.level * 55,
+                increase: 150,
+                base: 303 + skill.level * 101,
                 damageIncrease: 2,
                 profAddition: Math.max(1, 5 - skill.level * 0.1)
             }),
-            getCooldown: (skill, p) => Math.max(5, 20 - skill.level * 0.2),
+            getCooldown: (skill, p) => Math.max(5, 20 - skill.level * 0.7),
             getCostMessage: (skill, p) => `${Utils.toFixed(skill.getValue(p, 'cost'), 1)}마나`,
             getCostFailMessage: (skill, p) => '마나가 부족합니다.',
             canTakeCost: (skill, p) => p.mana >= skill.getValue(p, 'cost'),

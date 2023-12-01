@@ -375,8 +375,11 @@ export class Player extends LivingEntity {
             }
         }
 
+        const applyDeathPenalty = this.level > 50;
+
         this.deadTime = this.reviveTime;
-        this.sendRawMessage(`[ ${this.getName()}님, 사망하셨습니다. \n` +
+        this.sendRawMessage(`[ ${this.getName()}님, 사망하셨습니다.\n` + 
+            (applyDeathPenalty ? `사망 패널티가 부과됩니다. (경험치 하락)\n` : '') +
             new TimeFormat(this.deadTime * 1000)
                 .useUntilDays()
                 .format('d일 h시간 m분 s초')
@@ -384,6 +387,37 @@ export class Player extends LivingEntity {
                 .replace(/^0시간 /, '')
                 .replace(/^0분 /, '')
             + ' 후에 부활합니다. ]');
+
+            
+        if(applyDeathPenalty) {
+            let beforeLv = this.level;
+            this.exp -= this.maxExp * 0.22;
+
+            if(this.latestAbuser instanceof Monster) {
+                let monster = this.latestAbuser as Monster;
+                if(monster.level > this.level) {
+                    this.exp -= this.maxExp * (0.2 + 2 * (monster.level / this.level - 1));
+                }
+            }
+
+            let stack = 0;
+            while(this.exp < 0 && stack < this.level - 50) {
+                this.exp += this.maxExp;
+                stack++;
+            }
+            this.setLevel(this.level - stack);
+
+            if(beforeLv > this.level) {
+                this.sendMessage(ComponentBuilder.message([
+                    ComponentBuilder.blockText(`${this.getName()}님의 레벨이 하락했습니다.\n` +
+                        `Lv.${beforeLv}  ►  Lv.${this.level}\n`, {
+                            padding: '10px 15px',
+                            borderBlock: '2px solid #7744aa',
+                            textAlign: 'center'
+                        })
+                ]));
+            }
+        }
     }
 
     getSkill(name: string) {
@@ -1117,10 +1151,10 @@ export class Player extends LivingEntity {
     }
 
     static cannotUseNickname(nickname: string) {
-        return (
-            (!(/^[가-힣ㄱ-ㅎa-zA-Z _0-9]+$/.test(nickname)) || nickname.trim().length === 0) || 
-            Player.players.some(u => u.name === nickname)
-        ) && nickname.length !== 0;
+        return !(/^[가-힣ㄱ-ㅎa-zA-Z _0-9]+$/.test(nickname)) || 
+            nickname.trim().length === 0 || 
+            nickname.length > 15 ||
+            Player.players.some(u => u.name === nickname);
     }
 
     static sendGroupRawMessage(players: Player[], message: string) {

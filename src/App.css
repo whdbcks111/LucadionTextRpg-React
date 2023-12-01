@@ -100,6 +100,36 @@ body {
   display: flex;
 }
 
+.bottom-info {
+  flex-basis: 35px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  background-color: #00000044;
+  border-radius: 10px;
+  margin: 0 5px;
+}
+
+.bottom-info > div {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.bottom-hp-mp > .hp-mp-bar {
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-hp-mp > .hp-mp-bar, 
+.bottom-target-hp > .progress-container,
+.bottom-as > .progress-container {
+  flex-grow: 1;
+  margin: 0 10px;
+}
+
 .attack-speed-bar > .progress-container {
   border-radius: 0;
   margin: 0;
@@ -310,7 +340,7 @@ body {
 }
 
 .chat-box > .popup-data {
-  max-width: 350px;
+  max-width: 400px;
   position: absolute;
   top: 70px;
   right: 20px;
@@ -338,7 +368,7 @@ body {
   margin-left: 10px;
 }
 
-.map-player-info, .cooldown-list-info {
+.popup-list-info {
     font-size: 0.8em;
     background-color: #55555511;
     border-radius: 10px;
@@ -346,11 +376,11 @@ body {
     margin-top: 5px;
 }
 
-.map-player-info > .title, .cooldown-list-info > .title {
+.popup-list-info > .title {
   padding-bottom: 5px;
 }
 
-.map-player-info > .list, .cooldown-list-info > .list {
+.popup-list-info > .list {
   display: flex;
   flex-direction: column;
   font-size: 0.9em;
@@ -361,12 +391,6 @@ body {
   color: white;
   min-width: 15px;
   display: inline-block;
-}
-
-.popup-data > .life-data, .attack-speed-data {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
 }
 
 .popup-data .progress-container {

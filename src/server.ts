@@ -57,6 +57,9 @@ process.on('SIGINT', async () => {
         console.log('backup data...');
         await backupData();
         console.log('backup complete!');
+        console.log('removing old backuped data...');
+        await removeOldBackupedData();
+        console.log('complete!');
     }
     process.exit();
 });
@@ -70,15 +73,25 @@ setInterval(() => {
     }
 }, 50);
 
-setInterval(() => {
+setInterval(async () => {
     if (Date.now() > backupDate.getTime()) {
         backupDate.setDate(backupDate.getDate() + 1);
-        backupData();
+        await backupData();
+        await removeOldBackupedData();
     }
     else {
-        saveData();
+        await saveData();
     }
 }, SAVE_INTERVAL);
+
+async function removeOldBackupedData() {
+    const files = fs.readdirSync(Utils.BACKUP_PATH);
+    for(const file of files) {
+        const birth = fs.statSync(Utils.BACKUP_PATH + file).birthtimeMs;
+        if(Date.now() - birth > 1000 * 3600 * 24 * 10) 
+            fs.rm(file, { recursive: true, force: true }, () => {});
+    }
+}
 
 async function backupData() {
     await saveData();
@@ -969,11 +982,13 @@ chat.on('connection', (client: Socket) => {
                 userCount: userCountMap.get(r.id) ?? 0
             })),
             playerLife: player.life / player.maxLife,
+            playerMana: player.mana / player.maxMana,
             cooldowns: player.skills
                 .map<[string, number]>(s => [s.name, s.getRemainCooldown(player) / s.getCooldown(player)])
                 .filter(pair => pair[1] > 0),
             profilePic: user.profilePic,
             mapPlayerNames: player.getLocation().getPlayers().map(p => p.getName()),
+            mapLocNames: player.getLocation().movables,
             roomUserCount: userCountMap.get(room.id) ?? 0,
             totalUserCount: connected.length,
             currentActionBar: player.actionBars[0] ? player.actionBars[0][1] : null,
@@ -1252,7 +1267,7 @@ function loginUser(email: string, password: string): LoginMessage {
 function registerUser(email: string, nickname: string, password: string): RegisterMessage {
     email = email.replace(/\.\+/g, '');
     if (User.users.some(u => u.email === email)) return 'email-already-registered';
-    if (Player.cannotUseNickname(nickname)) return 'nickname-cannot-use';
+    if (Player.cannotUseNickname(nickname) && nickname.length !== 0) return 'nickname-cannot-use';
 
     let uid: string = '';
     do { uid = crypto.randomUUID(); } while (User.getUser(uid));

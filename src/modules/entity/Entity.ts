@@ -188,7 +188,7 @@ export abstract class Entity {
             this.stat.getStat(StatType.AGILITY) * 1.9);
         this.attribute.addValue(AttributeType.PROJECTILE_SPEED, 
             this.stat.getStat(StatType.STRENGTH) * 1.3);
-
+ 
         this.attribute.addValue(AttributeType.DEXTERITY, 
             Utils.clamp(this.stat.getStat(StatType.SENSE), 0, 75) * 0.7);
         this.attribute.addValue(AttributeType.DEXTERITY, 

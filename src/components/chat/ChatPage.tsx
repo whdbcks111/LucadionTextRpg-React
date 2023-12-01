@@ -430,33 +430,41 @@ function ChatPage() {
                 ))}
             </div>
             <div className='popup-data' style={{
-                width: `calc(30% * ${options.uiScale})`,
                 fontSize: `calc(1em * ${options.uiScale})`
             }}>
-                <span className='player-data life-data'>
-                    <MessageIcon icon='heart' />
-                    <ProgressBar progress={pingData?.playerLife ?? 1} length='' color={Utils.MAIN_COLOR} height='5px' />
-                </span>
-                <span className='target-data life-data'>
-                    <MessageIcon icon='target' />
-                    <ProgressBar progress={pingData?.targetLife ?? 0} length='' color='red' height='5px' />
-                </span>
-                <div className='map-player-info'>
+                
+                <div className='map-movable-info popup-list-info'>
+                    <div className='title'>이동 가능 지역</div>
+                    <div className='list'>
+                        {
+                            (pingData?.mapLocNames ?? []).slice(0, 5).map((name, i) =>
+                                <div key={i}>
+                                    <span className='order'>{i+1}</span> {name}
+                                </div>
+                            )
+                        }
+                        {pingData && pingData.mapLocNames &&
+                            pingData.mapLocNames.length > 5 ? '...' : ''}
+                    </div>
+                </div>
+
+                <div className='map-player-info popup-list-info'>
                     <div className='title'>맵 플레이어</div>
                     <div className='list'>
                         {
-                            (pingData?.mapPlayerNames ?? []).slice(0, 6).map((name, i) =>
+                            (pingData?.mapPlayerNames ?? []).slice(0, 4).map((name, i) =>
                                 <div key={i}>
                                     <span className='order'>{i+1}</span> {name}
                                 </div>
                             )
                         }
                         {pingData && pingData.mapPlayerNames &&
-                            pingData.mapPlayerNames.length >= 6 ? '...' : ''}
+                            pingData.mapPlayerNames.length > 4 ? '...' : ''}
                     </div>
                 </div>
+
                 
-                <div className='cooldown-list-info'>
+                <div className='cooldown-list-info popup-list-info'>
                     <div className='title'>스킬 재사용 대기시간</div>
                     <div className='list'>
                         {
@@ -492,9 +500,23 @@ function ChatPage() {
                         )}
                     </div> : null
             }
-            <div className='attack-speed-bar'>
-                <ProgressBar progress={pingData?.attackSpeedProgress ?? 0} length='100%' color={
-                    (pingData?.attackSpeedProgress ?? 0) >= 1 ? 'white': '#aaa'} height='100%' />
+            <div className='bottom-info'>
+                <div className='bottom-hp-mp'>
+                    <MessageIcon icon='heart' />
+                    <div className='hp-mp-bar'>
+                        <ProgressBar progress={pingData?.playerLife ?? 1} length='' color={Utils.MAIN_COLOR} height='8px' />
+                        <ProgressBar progress={pingData?.playerMana ?? 1} length='' color={Utils.MAGIC_COLOR} height='5px' />
+                    </div>
+                </div>
+                <div className='bottom-as'>
+                    <MessageIcon icon='sword' />
+                    <ProgressBar progress={pingData?.attackSpeedProgress ?? 0} length='' color={
+                    (pingData?.attackSpeedProgress ?? 0) >= 1 ? 'white': '#aaa'} height='8px' />
+                </div>
+                <div className='bottom-target-hp'>
+                    <MessageIcon icon='target' />
+                    <ProgressBar progress={pingData?.targetLife ?? 0} length='' color='red' height='8px' />
+                </div>
             </div>
             <div className='chat-toolbar'>
                 <div className='action-bar'>

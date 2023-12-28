@@ -158,6 +158,22 @@ export class Terrain {
             ItemStack.fromName('그레만스 보우'), 
             ItemStack.fromName('다크닉 그랜드 완드')
         ]), 3600),
+        new Terrain('shadow_box', '그림자 상자', Terrain.ITEM_PICK_CHECK([
+            ItemStack.fromName('망령의 두건'), 
+            ItemStack.fromName('카오스 니즈'), 
+            ItemStack.fromName('고스타디움'), 
+            ItemStack.fromName('메른토베아스'),
+            ItemStack.fromName('소형 아공간 저장고'),
+            ItemStack.fromName('어둠의 목걸이'),
+            ItemStack.fromName('르호크 투핸디드 소드'),
+            ItemStack.fromName('상급 마나 물약', 4),
+            ItemStack.fromName('최상급 회복 물약', 3),
+            ItemStack.fromName('로스트 플라워', 6),
+            ItemStack.fromName('로스트 플라워', 16),
+            ItemStack.fromName('다크 혼즈', 16),
+            ItemStack.fromName('소울 링'),
+            ItemStack.fromName('소울 슈즈')
+        ]), 3600),
         new Terrain('plant_1', '풀'),
         new Terrain('plant_2', '풀', Terrain.ITEM_PICK_CHECK([
             ItemStack.fromName('파이어리지 플라워', 3)

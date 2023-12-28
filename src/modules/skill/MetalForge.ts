@@ -12,6 +12,7 @@ export class MetalForgeForm extends Enum {
     static HELMET = new MetalForgeForm('helmet', '투구', 5);
     static LEGGINGS = new MetalForgeForm('leggings', '레깅스', 13);
     static BOOTS = new MetalForgeForm('boots', '부츠', 6);
+    static BOW = new MetalForgeForm('bow', '활대', 3);
 
     itemName: string;
     neededCount: number;

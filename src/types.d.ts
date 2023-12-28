@@ -167,6 +167,24 @@ export interface ShopPresetObject {
     regenTime: number;
 }
 
+export interface CCUInfo {
+    nickname: string;
+    currentRoomId: string;
+    currentRoomName: string;
+    locationName: string;
+    isDead: boolean;
+    lifeProgress: number;
+}
+
+export interface BattleBalanceInfo {
+    characterClassName: string;
+    avgDamage: number;
+    avgMaxLife: number;
+    avgDefend: number;
+    avgMagicResistance: number;
+    avgMoveSpeed: number;
+}
+
 export interface LoginInfo {
     email: string;
     password: string;
@@ -195,6 +213,7 @@ export interface ServerPingData {
     currentActionBar?: MessageComponent | null;
     attackSpeedProgress?: number;
     isHotTime?: boolean;
+    isDev?: boolean;
 }
 
 export type LoginMessage = 

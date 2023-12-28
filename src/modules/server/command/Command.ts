@@ -5,16 +5,18 @@ import { ComponentBuilder, getRawText, isTextComponent } from "../chat/Component
 
 export class Command {
     labels: string[];
-    argFormats: CommandArg[];
+    argFormats: [CommandArg, string][];
+    description: string;
     handler: CommandHanlder;
     isDevOnly = false;
     isAliveOnly = true;
     keyBinds: string[];
     defaultArgs: string[] = [];
 
-    constructor(labels: string[], argFormats: CommandArg[], keyBinds: string[], 
+    constructor(labels: string[], argFormats: [CommandArg, string][], keyBinds: string[], desc: string,
         handler: (chatData: HandleChatData, player: Player, label: string, args: string[]) => void) {
         this.labels = labels;
+        this.description = desc;
         this.handler = handler;
         this.argFormats = argFormats;
         this.keyBinds = keyBinds;
@@ -100,14 +102,14 @@ export class Command {
                     args = args.concat(this.defaultArgs.slice(-needed));
                 else return;
             }
-            else if(args.length > this.argFormats.length && !this.argFormats.includes(CommandArg.STRING)) return;
+            else if(args.length > this.argFormats.length && !this.argFormats.some(f => f[0] === CommandArg.STRING)) return;
 
             let pointer = 0;
             let invalidArg = false;
 
             this.argFormats.forEach((format, idx) => {
                 if(invalidArg) return;
-                switch(format) {
+                switch(format[0]) {
                     case CommandArg.INTEGER:
                         if(!/^-?[0-9]+$/.test(args[pointer])) {
                             invalidArg = true
@@ -150,11 +152,11 @@ export class Command {
 
 export class CommandArg extends Enum {
 
-    static INTEGER = new CommandArg('integer', '[정수]');
-    static POSITIVE_INTEGER = new CommandArg('positiveInteger', '[자연수]');
-    static NUMBER = new CommandArg('number', '[수]');
-    static WORD = new CommandArg('word', '[값]');
-    static STRING = new CommandArg('string', '[문장]');
+    static INTEGER = new CommandArg('integer', '정수');
+    static POSITIVE_INTEGER = new CommandArg('positiveInteger', '자연수');
+    static NUMBER = new CommandArg('number', '수');
+    static WORD = new CommandArg('word', '단어');
+    static STRING = new CommandArg('string', '문장');
 
     formatStr: string;
 

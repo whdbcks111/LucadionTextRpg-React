@@ -3,7 +3,7 @@ import { AttributeType, Item } from "../Internal";
 import Enum from "../util/Enum";
 import { Time } from "../Internal";
 import { World, Effect, Utils } from "../Internal";
-import { AttackOptions, ExtraObject } from "../../types";
+import { AttackOptions, ExtraObject, MessageComponent } from "../../types";
 import { ComponentBuilder } from "../server/chat/ComponentBuilder";
 
 
@@ -399,7 +399,7 @@ export abstract class Entity {
             abuser.log.addLog(PlayerLog.TYPED_ATTACK_COUNT(
                 this.slot.hand?.type ?? (this instanceof Projectile ? 'projectile': 'none')));
         }
-
+/*
         const abuserName = this !== abuser ? this.getName() + (abuser ? '(' + abuser.getName() + ')': '') : abuser.getName();
         let abuserNumber = 0;
         if(abuser instanceof Entity) {
@@ -413,7 +413,9 @@ export abstract class Entity {
                 ComponentBuilder.empty(),
             ComponentBuilder.text(`${finalDamage.toFixed(1) + (critDamage > 0 ? '(+' + critDamage.toFixed(1) + ')' : '')}만큼 피해를 주었습니다!\n`),
             ComponentBuilder.progressBar(victim.life, victim.maxLife, 'percent')
-        ], abuser instanceof Player ? Utils.MAIN_COLOR : 'red');
+        ], abuser instanceof Player ? Utils.MAIN_COLOR : 'red');*/
+
+        let attackMessage = Entity.createAttackMessage(abuser, this, victim, finalDamage, critDamage, options.additionalMessage);
 
         let sendTargets: Player[] = [];
         if(abuser instanceof Player) sendTargets.push(abuser);
@@ -422,6 +424,27 @@ export abstract class Entity {
         Player.sendGroupMessage(sendTargets, attackMessage);
 
         return true;
+    }
+
+    static createAttackMessage(abuser: Entity, attacker: Entity, victim: Entity, 
+        finalDamage: number, critDamage: number, additionalMessage?: MessageComponent) {
+
+        const abuserName = attacker !== abuser ? 
+        attacker.getName() + (abuser ? '(' + abuser.getName() + ')': '') : 
+        abuser.getName();
+        let abuserNumber = 0;
+        if(abuser instanceof Monster) {
+            abuserNumber = (abuser as Monster).getLocation().objects.findIndex(o => o === abuser) + 1;
+        }
+
+        return ComponentBuilder.embed([
+            ComponentBuilder.text(`[ ${abuserName + (abuserNumber > 0 ? '(' + abuserNumber + ')': '')} ▶ ${victim.getName()} ]\n`),
+            additionalMessage ? 
+                ComponentBuilder.message([additionalMessage!!, ComponentBuilder.text('\n')]) : 
+                ComponentBuilder.empty(),
+            ComponentBuilder.text(`${finalDamage.toFixed(1) + (critDamage > 0 ? '(+' + critDamage.toFixed(1) + ')' : '')}만큼 피해를 주었습니다!\n`),
+            ComponentBuilder.progressBar(victim.life, victim.maxLife, 'percent')
+        ], abuser instanceof Player ? Utils.MAIN_COLOR : 'red')
     }
 
     damage(damage: number, abuser: LivingEntity | null = null) {

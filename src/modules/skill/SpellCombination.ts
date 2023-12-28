@@ -163,6 +163,24 @@ export class SpellCombination {
         });
     }
 
+    static getSpell(spellLog: [string, string][]) {
+        let cur: SpellMap | SpellAction | undefined = SpellCombination.spellMap;
+        let depth = 0;
+        while(cur) {
+            if(typeof cur === 'function') {
+                return spellLog.slice(-depth).map(e => e[0]).join(' ');
+            }
+            else {
+                const next = spellLog.at(-(depth + 1));
+                if(!next) return null;
+                const nextSpell = next[0];
+                cur = cur[nextSpell];
+                depth++;
+            }
+        }
+        return null;
+    }
+
     static runSpell(p: Player, spellLog: [string, string][]): false | number {
         let cur: SpellMap | SpellAction | undefined = SpellCombination.spellMap;
         let depth = 0;
@@ -175,7 +193,7 @@ export class SpellCombination {
                 else return false;
             }
             else {
-                const next = spellLog.slice(-(depth + 1))[0];
+                const next = spellLog.at(-(depth + 1));
                 if(!next) return false;
                 const nextSpell = next[0];
                 cur = cur[nextSpell];

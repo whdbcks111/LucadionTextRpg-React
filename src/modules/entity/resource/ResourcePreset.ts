@@ -136,6 +136,27 @@ export class ResourcePreset {
                     ]));
                 }
             }
+        },
+        {
+            name: '카오스 크리스탈',
+            displayName: '카오스 크리스탈',
+            level: 2000,
+            attributes: {
+                maxLife: 300000,
+                defend: 164000,
+                magicResistance: 200000
+            },
+            drops: [],
+            onDestroy: (resource, p) =>{
+                if (p instanceof Player) {
+                    let h = p.heal(300000);
+                    p.sendMessage(ComponentBuilder.message([
+                        ComponentBuilder.text(`[ 생명력이 ${h.toFixed(1)}만큼 회복되었다! ]\n`),
+                        ComponentBuilder.text(`생명력 `),
+                        ComponentBuilder.progressBar(p.life, p.maxLife, 'percent', 'white', '150px')
+                    ]));
+                }
+            }
         }
     ];
 

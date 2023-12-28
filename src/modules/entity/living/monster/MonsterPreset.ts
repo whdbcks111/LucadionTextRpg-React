@@ -85,6 +85,19 @@ export class MonsterPreset {
             }
         },
         {
+            name: '강철 허수아비',
+            level: 1,
+            attributes: {
+                maxLife: '+50000000'
+            },
+            regenTime: 0,
+            onUpdate: monster => {
+                monster.canMove = false;
+                monster.addEffect(new Effect(EffectType.INVULNERABLE, 1, 10));
+                monster.heal(monster.maxLife * 0.1 * Time.deltaTime);
+            }
+        },
+        {
             name: '연습용 인형',
             level: 1,
             attributes: {
@@ -687,6 +700,44 @@ export class MonsterPreset {
             ]
         },
         {
+            name: '광폭 마족 전사',
+            level: 2500,
+            types: [MonsterType.DEVILDOM, MonsterType.HUMANOID],
+            gold: 5000,
+            tendency: MonsterTendency.HOSTILE,
+            attributes: {
+                attack: '+305000+35%',
+                defend: '+42000',
+                moveSpeed: '+5000',
+                defendPenetrate: '+20000',
+                maxLife: '+5000000+50%'
+            },
+            stat: {
+                strength: 3600,
+                vitality: 3592,
+                agility: 1200
+            },
+            onUpdate: monster => {
+                if (monster.targets.size > 0
+                    && monster.isAttackEnded) {
+                    let target = monster.target;
+                    let args: AttackOptions = {
+                        onHit: victim => {
+                            if (Math.random() < 0.7) if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.BLOOD, 60, 4.5));
+                            if (Math.random() < 0.2) {
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.STUN, 1, 1.6));
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.FIRE, 150, 7.5));
+                            }
+                        },
+                    };
+                    if (target) monster.attack(target, args);
+                }
+            },
+            drops: [
+                new DropItem('혼돈의 정수', 5, 20, 0.6)
+            ]
+        },
+        {
             name: '마족 암흑전사',
             level: 1200,
             types: [MonsterType.DEVILDOM, MonsterType.HUMANOID],
@@ -743,6 +794,45 @@ export class MonsterPreset {
                 strength: 600,
                 vitality: 2592,
                 agility: 200
+            },
+            onUpdate: monster => {
+                if (monster.targets.size > 0
+                    && monster.isAttackEnded) {
+                    let target = monster.target;
+                    let args: AttackOptions = {
+                        onHit: victim => {
+                            if (Math.random() < 0.7) if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.BLOOD, 60, 4.5));
+                            if (Math.random() < 0.2) {
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.STUN, 1, 1.6));
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.FIRE, 150, 7.5));
+                            }
+                        },
+                    };
+                    if (target) monster.attack(target, args);
+                }
+            },
+            drops: [
+                new DropItem('불의 정수', 5, 20, 0.6)
+            ]
+        },
+        {
+            name: '암흑 방패단',
+            level: 2250,
+            types: [MonsterType.DEVILDOM, MonsterType.HUMANOID],
+            gold: 3000,
+            tendency: MonsterTendency.HOSTILE,
+            attributes: {
+                attack: '+15000+10%',
+                defend: '+42000',
+                moveSpeed: '-20%',
+                attackSpeed: '-20%',
+                defendPenetrate: '+10000',
+                maxLife: '+10000000+20%'
+            },
+            stat: {
+                strength: 600,
+                vitality: 5592,
+                agility: 500
             },
             onUpdate: monster => {
                 if (monster.targets.size > 0
@@ -1115,6 +1205,51 @@ export class MonsterPreset {
             ]
         },
         {
+            name: '마족 고위 주술사',
+            level: 2550,
+            types: [MonsterType.DEVILDOM, MonsterType.HUMANOID],
+            tendency: MonsterTendency.HOSTILE,
+            attributes: {
+                defend: '+100000',
+                magicResistance: '+100000',
+                maxLife: '+5000000',
+                moveSpeed: '+1500',
+                magicAttack: '+50%'
+            },
+            stat: {
+                spell: 7000,
+                vitality: 2100
+            },
+            onUpdate: monster => {
+                monster.filterEffects(eff => !(eff.type === EffectType.FIRE && eff.level <= 50));
+                if (monster.targets.size > 0
+                    && monster.isAttackEnded) {
+                    let target = monster.target;
+                    let projectile = new Projectile({
+                        name: '더 커스드 스피어',
+                        attributes: {
+                            magicAttack: monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 3.3,
+                            moveSpeed: 45000
+                        },
+                        onHit: (projectile, victim) => {
+                            if (victim instanceof LivingEntity) {
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.FIRE, 100, 7));
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.DECAY, 50, 7));
+                            }
+                        },
+                        owner: monster
+                    });
+                    if (target) projectile.attack(target, {
+                        isMagicAttack: true,
+                        applyAttackSpeed: true
+                    });
+                }
+            },
+            drops: [
+                new DropItem('불의 정수', 1, 1, 0.5)
+            ]
+        },
+        {
             name: '라바 리자드',
             level: 69,
             types: [MonsterType.FIRE, MonsterType.BEAST],
@@ -1235,14 +1370,14 @@ export class MonsterPreset {
             level: 350,
             types: [MonsterType.POISON, MonsterType.WORM],
             attributes: {
-                magicResistance: '+100',
-                maxLife: '+300',
-                attackSpeed: '-60%',
+                magicResistance: '+300',
+                maxLife: '+30%',
+                attackSpeed: '-70%',
                 moveSpeed: '-10'
             },
             stat: {
                 spell: 500,
-                vitality: 400,
+                vitality: 600,
                 sense: 105
             },
             onUpdate: monster => {
@@ -1253,12 +1388,12 @@ export class MonsterPreset {
                     let projectile = new Projectile({
                         name: '맹독 가시',
                         attributes: {
-                            magicAttack: monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 0.32,
-                            moveSpeed: 600
+                            magicAttack: monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * ((target !== null && target.level < monster.level) ? 1.1 :  0.42),
+                            moveSpeed: 700
                         },
                         onHit: (projectile, victim) => {
                             if (victim instanceof LivingEntity && Math.random() < 0.6) {
-                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.POISON, 10, 30));
+                                if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.POISON, 20, 15));
                             }
                         },
                         owner: monster
@@ -1266,12 +1401,13 @@ export class MonsterPreset {
                     for (let i = 0; i < 3; i++)
                         if (target) projectile.attack(target, {
                             isMagicAttack: true,
-                            applyAttackSpeed: true
+                            applyAttackSpeed: true,
+                            useAbuserCritical: true
                         });
                 }
             },
             drops: [
-
+                new DropItem('실코라 껍질', 5, 10, 0.7)
             ]
         },
         {
@@ -1999,6 +2135,7 @@ export class MonsterPreset {
                         name: '트리플 나이핑',
                         owner: monster,
                         attributes: {
+                            moveSpeed: 15000,
                             magicAttack: monster.attribute.getValue(AttributeType.ATTACK) * 2.65
                         },
                         onHit: (projectile, victim) => {
@@ -2012,8 +2149,7 @@ export class MonsterPreset {
                         for(let i = 0; i < 3; i++)
                             pr.attack(target, {
                                 isMagicAttack: true,
-                                isFixedAttack: true,
-                                absoluteHit: true
+                                isFixedAttack: true
                             });
                     }
                         
@@ -2336,6 +2472,99 @@ export class MonsterPreset {
                 new DropItem('검붉은 가시갈고리', 1, 1, 0.1),
                 new DropItem('불의 정수', 10, 100, 1),
                 new DropItem('블랙체스트', 1, 1, 0.1)
+            ]
+        },
+        {
+            name: '메른베화스 더 데빌 로드',
+            types: [MonsterType.DEVILDOM, MonsterType.HUMANOID],
+            level: 6666,
+            regenTime: 60 * 40,
+            gold: 225,
+            tendency: MonsterTendency.HOSTILE,
+            attributes: {
+                attack: '+40%',
+                rangeAttack: '+60000+40%',
+                defend: '+200000',
+                magicResistance: '+200000',
+                maxLife: '+20000000+30%'
+            },
+            stat: {
+                strength: 6666,
+                vitality: 10666,
+                agility: 3666,
+                sense: 500
+            },
+            onUpdate: monster => {
+                if (monster.getLocation() && monster.getLocation().getPlayers(true).length === 0) monster.extras.start = false;
+                if (monster.getLocation() && !monster.extras.start) {
+                    monster.extras.start = true;
+                    monster.extras.incAtk = false;
+                    monster.extras.phase = 1;
+                    monster.extras.fire = 10;
+                    monster.getLocation().objects.forEach(o => o.deadTime = 0);
+                }
+
+                if (monster.getLocation() && monster.life < monster.maxLife * 0.3 && monster.extras.phase === 1 && 
+                    monster.getLocation().objects.filter(s => s.name === '카오스 크리스탈').some(s => s.isAlive)) {
+                    monster.extras.phase++;
+                    monster.life = monster.maxLife;
+                    let players = monster.getLocation().getPlayers(true);
+                    Player.sendGroupRawMessage(players, '[ 정말 그게 통할 것이라고 생각했느냐? ]\n' +
+                        '마왕이 크리스탈에게서 더 강력한 죽음의 기운을 불러옵니다...!');
+                }
+
+                if (monster.getLocation() && monster.extras.phase === 2 && monster.getLocation().objects.filter(s => s.name === '카오스 크리스탈').some(s => s.isAlive)) {
+                    monster.life = Math.max(monster.maxLife * 0.2, monster.life);
+                }
+
+                if (monster.getLocation() && monster.extras.fire > 0) {
+                    monster.extras.fire -= Time.deltaTime;
+                    if (monster.extras.fire <= 0) {
+                        let players = monster.getLocation().getPlayers(true);
+                        Player.sendGroupRawMessage(players, '[ 영원히 불타올라라! ]\n' +
+                            '마왕이 게헨나의 사슬로 모두를 속박했습니다!');
+                        players.forEach(p => p.addEffect(new Effect(EffectType.FIRE, p.level < monster.level ? 1000 / (players.length * 2 - 1) : 100, 15, monster)));
+                        players.forEach(p => p.addEffect(new Effect(EffectType.BIND, 100, 7, monster)));
+                        monster.extras.fire = 25;
+                    }
+                }
+
+                if (monster.targets.size > 0
+                    && monster.isAttackEnded) {
+                    let target = monster.target;
+                    if (Math.random() < 0.5) {
+                        let isSkill = Math.random() < 0.25;
+                        let projectile = new Projectile({
+                            name: isSkill ? '카오틱 플레임' : '비올레틱 대거',
+                            attributes: {
+                                attack: monster.attribute.getValue(AttributeType.RANGE_ATTACK) * (monster.extras.incAtk ? 1.3 : 1),
+                                moveSpeed: 58000 + 2 * monster.attribute.getValue(AttributeType.PROJECTILE_SPEED)
+                            },
+                            onHit: (projectile, victim) => {
+                                if (victim instanceof LivingEntity) {
+                                    if (isSkill) {
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.SILENCE, 1, 10));
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.STUN, 1, 2));
+                                    }
+                                    if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.DECREASE_HEAL_EFFICIENCY, 10, 6));
+                                }
+                            },
+                            owner: monster
+                        });
+                        if (target) projectile.attack(target, {
+                            applyAttackSpeed: true
+                        });
+                        monster.extras.incAtk = false;
+                    }
+                    else monster.tryAttack();
+                }
+            },
+            drops: [
+                new DropItem('카오틱 데빌 소드', 1, 1, 0.1),
+                new DropItem('카오틱 데빌 완드', 1, 1, 0.1),
+                new DropItem('카오틱 데빌 대거', 1, 1, 0.1),
+                new DropItem('혼돈의 정수', 10, 100, 1),
+                new DropItem('데빌 로드 하트', 1, 1, 0.066)
             ]
         },
         {
@@ -2694,6 +2923,117 @@ export class MonsterPreset {
             gold: 2600
         },
         {
+            name: '데빌 코어',
+            level: 3600,
+            types: [MonsterType.FIRE],
+            regenTime: 60 * 30,
+            attributes: {
+                defend: '+30000',
+                magicResistance: '+30000',
+                maxLife: '+20000000',
+                magicAttack: '+100000'
+            },
+            stat: {
+                vitality: 9000,
+                spell: 2000
+            },
+            onUpdate: monster => {
+                if (monster.getLocation() && monster.getLocation().getPlayers(true).length === 0) monster.extras.start = false;
+                if (!monster.extras.start) {
+                    monster.extras.start = true;
+                    monster.extras.magicCount = 0;
+                    monster.extras.phase = 0;
+                }
+
+                if (monster.getLocation() && monster.life < monster.maxLife * 0.25 && monster.extras.phase === 0) {
+                    monster.life = monster.maxLife * 0.5;
+                    monster.extras.phase++;
+                    monster.stat.addStat(StatType.SPELL, 50);
+                    let players = monster.getLocation().getPlayers(true);
+                    Player.sendGroupRawMessage(players, '[ 코어가 폭주합니다! ]');
+                    players.forEach(p => {
+                        p.addEffect(new Effect(EffectType.AIRBORNE, 1, 3.5, monster));
+                    });
+                }
+
+                if (monster.getLocation() && monster.targets.size > 0
+                    && Date.now() - monster.latestAttack >= 4 * 1000) {
+                    let projectile: Projectile;
+                    let players = monster.getLocation().getPlayers(true);
+                    let target = monster.target;
+                    switch (monster.extras.magicCount %= 3) {
+                        case 0:
+                            projectile = new Projectile({
+                                name: '게헨나의 불',
+                                owner: monster,
+                                attributes: {
+                                    magicAttack: 1000 + monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 0.8,
+                                    moveSpeed: 40000
+                                },
+                                onHit: (projectile, victim) => {
+                                    if (victim instanceof LivingEntity) {
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.BIND, 1, 3, monster));
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.FIRE, 50, 10, monster));
+                                    }
+                                }
+                            });
+                            if (target) projectile.attack(target, {
+                                isMagicAttack: true,
+                                applyAttackSpeed: true
+                            });
+                            break;
+                        case 1:
+                            projectile = new Projectile({
+                                name: '카오스 소닉',
+                                owner: monster,
+                                attributes: {
+                                    magicAttack: 700 + monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 0.7,
+                                    moveSpeed: 100000
+                                },
+                                onHit: (projectile, victim) => {
+                                    if (victim instanceof LivingEntity) {
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.SLOWNESS, 10, 6, monster));
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.DECREASE_DEFEND, 20, 4.5, monster));
+                                    }
+                                }
+                            });
+                            if (target) projectile.attack(target, {
+                                isMagicAttack: true,
+                                applyAttackSpeed: true
+                            });
+                            break;
+                        case 2:
+                            projectile = new Projectile({
+                                name: '카오스 에너지',
+                                owner: monster,
+                                attributes: {
+                                    magicAttack: 700 + monster.attribute.getValue(AttributeType.MAGIC_ATTACK) * 0.9,
+                                    moveSpeed: 3000000000
+                                },
+                                onHit: (projectile, victim) => {
+                                    if (victim instanceof LivingEntity) {
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.FIRE, 20, 60, monster));
+                                        if (victim instanceof LivingEntity) victim.addEffect(new Effect(EffectType.STUN, 3, 1.5, monster));
+                                    }
+                                }
+                            });
+                            players.forEach(p => {
+                                projectile.attack(p, {
+                                    isMagicAttack: true,
+                                    applyAttackSpeed: true
+                                });
+                            });
+                            break;
+                    }
+                    monster.extras.magicCount++;
+                }
+            },
+            drops: [
+                new DropItem('불의 정수', 3, 20, 1)
+            ],
+            gold: 26000
+        },
+        {
             name: '푸른 갑주의 망령, 아를렌',
             types: [MonsterType.UNDEAD, MonsterType.HUMANOID],
             level: 270,
@@ -2827,7 +3167,8 @@ export class MonsterPreset {
                 }
             },
             drops: [
-                new DropItem('거미 눈', 1, 8, 0.5)
+                new DropItem('거미 눈', 1, 8, 0.5),
+                new DropItem('실', 1, 3, 0.8)
             ]
         },
         {

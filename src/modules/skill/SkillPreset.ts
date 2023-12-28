@@ -80,8 +80,8 @@ export class SkillPreset {
             maxLevel: 1,
             checkRealizeCondition: p => p.hadClass('전사') && p.level > 500,
             calcValues: (skill, p) => ({ 
-                steelDef: 50,
-                lifeAddition: 1580 + p.attribute.getValue(AttributeType.ATTACK) * 0.2
+                steelDef: 20,
+                lifeAddition: 380 + p.attribute.getValue(AttributeType.ATTACK) * 0.1
             }),
             getDescription: (skill, p) => ComponentBuilder.texts([
                 `전투하고 있는 상대의 ${AttributeType.DEFEND.asObjective()} `,
@@ -302,6 +302,67 @@ export class SkillPreset {
             },
         },
         {
+            name: '크래셔',
+            isPassive: false,
+            maxLevel: 10,
+            checkRealizeCondition: p => p.hasSkill('크로스 슬래시', skill => skill.level >= skill.maxLevel * 0.5) && p.stat.getStat(StatType.VITALITY) >= 700,
+            calcValues: (skill, p) => ({ 
+                lifeCost: Math.max(p.life - 1, 100), //mana cost
+                attackIncrease: skill.level * 1.9 + 25, //attack increase
+                effectLevel: Math.floor(skill.level * 1.5 + 10), //effect level
+                effectTime: 10, //effect time
+                profAddition: Math.max(10.1 - skill.level * .1, .1), //prof addition
+            }),
+            getCooldown: (skill, p) => Math.max(5, 20 - skill.level * 0.25),
+            getCostMessage: (skill, p) => skill.getValue(p, 'lifeCost').toFixed(0) + '의 생명력 (체력 1 남기고 소모)',
+            getCostFailMessage: (skill, p) => '생명력이 부족합니다. (최소 100 필요)',
+            canTakeCost: (skill, p) => p.life >= skill.getValue(p, 'lifeCost'),
+            takeCost(skill, p) {
+                p.life -= skill.getValue(p, 'lifeCost')
+            },
+            getConditionMessage: (skill, p) => '목표물이 있고, 장검, 대검 또는 도끼를 들었을 때, 크래셔! 라고 말하기',
+            checkCondition: (skill, p) => p.isAlive && p.currentTarget !== null && 
+                p.tickMessage === '크래셔!' && ['장검', '대검', '도끼'].includes(p.slot.hand?.type ?? ''),
+            getDescription: (skill, p) => ComponentBuilder.message([
+                ComponentBuilder.text(`적에게 ${AttributeType.MAX_LIFE.displayName}의 `),
+                ComponentBuilder.text(skill.getValue(p, 'attackIncrease').toFixed(1) + '%', { color: Utils.PHYSICAL_COLOR }),
+                ComponentBuilder.text(`만큼의 피해를 입힙니다.\n` +
+                    `그리고 공격받은 대상에게 `),
+                Effect.getDescriptionMessage(EffectType.BLOOD, skill.getValue(p, 'effectLevel')),
+                ComponentBuilder.text(', '),
+                Effect.getDescriptionMessage(EffectType.ENHANCE_STRENGTH, skill.getValue(p, 'effectLevel')),
+                ComponentBuilder.text(', '),
+                Effect.getDescriptionMessage(EffectType.ENHANCE_RANGE, skill.getValue(p, 'effectLevel')),
+                ComponentBuilder.text(', '),
+                Effect.getDescriptionMessage(EffectType.ENHANCE_MAGIC, skill.getValue(p, 'effectLevel')),
+                ComponentBuilder.text(` 효과를 ${skill.getValue(p, 'effectTime').toFixed(1)}초간 부여합니다.`)
+            ]),
+            onUpdate(skill, p) {
+                if(!p.currentTarget || !p.currentTarget.isAlive) {
+                    skill.finish(p);
+                    return;
+                }
+
+                const amount = skill.getValue(p, 'attackIncrease') / 100 * p.maxLife;
+                const target = p.currentTarget;
+
+                target.damage(amount, p);
+
+                if (target instanceof LivingEntity) {
+                    [EffectType.BLOOD, EffectType.ENHANCE_STRENGTH, EffectType.ENHANCE_MAGIC, EffectType.ENHANCE_RANGE]
+                        .forEach(type =>
+                            target.addEffect(new Effect(type, skill.getValue(p, 'effectLevel'), skill.getValue(p, 'effectTime'), p)));
+                }
+
+                Player.sendGroupMessage([p, target].filter(e => e instanceof Player) as Player[],
+                    Entity.createAttackMessage(p, p, target, amount, 0, ComponentBuilder.text('크래셔!', {color: 'red'}))
+                );
+
+                skill.prof += skill.getValue(p, 'profAddition');
+                skill.finish(p);
+            },
+        },
+        {
             name: '난도',
             isPassive: false,
             maxLevel: 15,
@@ -380,18 +441,19 @@ export class SkillPreset {
             checkRealizeCondition: p => p.hadClass('암살자'),
             calcValues: (skill, p) => ({
                 attackAddition: p.attribute.getValue(AttributeType.MOVE_SPEED) * 
-                (skill.level * 0.1 + 15) + skill.level * 5000,
-                criticalChanceAddition: 25,
+                (skill.level * 0.1 + 10) + skill.level * 5000,
+                criticalChanceAddition: 15,
                 slownessLevel: Math.floor(skill.level * 2.3 + 6),
                 slownessTime: 5,
-                profAddition: Math.max(0.1, 5.1 - skill.level * 0.2)
+                profAddition: Math.max(0.1, 5.1 - skill.level * 0.2),
+                cooldownShrink: 60,
             }),
             getCooldown: (skill, p) => Math.max(5, 30 - skill.level * 0.35),
             getConditionMessage: (skill, p) => '목표물이 있고, 단검을 들었을 때, 암격! 라고 말하기',
             checkCondition: (skill, p) => p.isAlive && p.currentTarget !== null && 
                 p.tickMessage === '암격!' && ['단검'].includes(p.slot.hand?.type ?? ''),
             getDescription: (skill, p) => 
-                ComponentBuilder.message([
+                ComponentBuilder.texts([
                     ComponentBuilder.text(`${AttributeType.ATTACK.asSubjective()} `),
                     ComponentBuilder.text(skill.getValue(p, 'attackAddition').toFixed(1), { color: Utils.PHYSICAL_COLOR }),
                     ComponentBuilder.text(`(${AttributeType.MOVE_SPEED.displayName} 비례)`, { color: 'lightgray' }),
@@ -400,7 +462,8 @@ export class SkillPreset {
                     ComponentBuilder.text(` 증가된 채로 목표물을 공격합니다.\n` + 
                         `공격이 적중하면 `),
                     Effect.getDescriptionMessage(EffectType.SLOWNESS, skill.getValue(p, 'slownessLevel')),
-                    ComponentBuilder.text(` 효과를 ${Utils.toFixed(skill.getValue(p, 'slownessTime'), 1)}초 동안 부여합니다.`)
+                    ComponentBuilder.text(` 효과를 ${Utils.toFixed(skill.getValue(p, 'slownessTime'), 1)}초 동안 부여합니다.\n`),
+                    `이 스킬로 적을 처치하면 재사용 대기시간이 ${skill.getValue(p, 'cooldownShrink')}% 감소합니다.`
                 ]),
             onUpdate(skill, p) {
                 if(!p.currentTarget || !p.currentTarget.isAlive) {
@@ -420,6 +483,10 @@ export class SkillPreset {
                                 victim.addEffect(new Effect(EffectType.SLOWNESS, skill.getValue(p, 'slownessLevel'), skill.getValue(p, 'slownessLevel'), p));
                         },
                     });
+
+                    if(target.life <= 0 || target.isDead) {
+                        skill.setRemainCooldown(p, skill.getRemainCooldown(p) * (100 - skill.getValue(p, 'cooldownShrink')) / 100);
+                    }
                 });
 
                 skill.prof += skill.getValue(p, 'profAddition');
@@ -762,9 +829,9 @@ export class SkillPreset {
             calcValues: (skill, p) => ({ 
                 manaCost: skill.level * 42 + 200, //mana cost
                 attackSpeedIncrease: 29 + skill.level, //attack speed increase
-                maxStunTime: 3.9 + skill.level * 0.3, //stun max time
+                maxStunTime: 3.5 + skill.level * 0.3, //stun max time
                 maxHealDecreaseTime: 10, //heal decrease time
-                healDecreaseLevel: 10, //heal decrease level
+                healDecreaseLevel: 10 + skill.level, //heal decrease level
                 profAddition: Math.max(6.1 - skill.level * .2, .5), //prof addition
             }),
             getCostMessage: (skill, p) => skill.getValue(p, 'manaCost') + '마나',
@@ -787,10 +854,9 @@ export class SkillPreset {
                 p.sendMessage(ComponentBuilder.embed([
                     ComponentBuilder.text('[ 주위에서 그림자가 휘몰아친다..! ]')
                 ], '#555599'));
+                skill.extras.count = 0;
             },
             onUpdate(skill, p) {
-                if(typeof skill.extras.count !== 'number')
-                    skill.extras.count = 0;
 
                 p.registerTrigger(new Trigger({
                     onHit(p, victim) {
@@ -805,8 +871,8 @@ export class SkillPreset {
                     let healDecreaseLevel = skill.getValue(p, 'healDecreaseLevel');
                     let maxHealDecreaseTime = skill.getValue(p, 'maxHealDecreaseTime');
 
-                    let stunTime = Math.floor(Math.min(maxStunTime, maxStunTime * skill.extras.count / 8 + 1));
-                    let healDecreaseTime = Math.floor(Math.min(maxHealDecreaseTime, maxHealDecreaseTime * skill.extras.count / 8 + 1));
+                    let stunTime = Math.floor(Math.min(maxStunTime, maxStunTime * skill.extras.count / 8));
+                    let healDecreaseTime = Math.floor(Math.min(maxHealDecreaseTime, maxHealDecreaseTime * skill.extras.count / 8 + 2));
 
                     if (p.currentTarget instanceof LivingEntity) {
                         p.currentTarget.addEffect(new Effect(EffectType.STUN, 1, stunTime, p));
@@ -912,9 +978,9 @@ export class SkillPreset {
             maxLevel: 20,
             checkRealizeCondition: p => p.hadClass('광전사') && p.hasSkill('오버마스팅', skill => skill.level >= skill.maxLevel),
             calcValues: (skill, p) => ({
-                manaCost: 200 + skill.level * 10,
-                bindTime: 3,
-                lifeAbsorb: 8 + skill.level * 0.3,
+                manaCost: 200 + skill.level * 15,
+                bindTime: 2.4,
+                lifeAbsorb: 5 + skill.level * 0.3,
                 profAddition: Math.max(1, 7 - skill.level * 0.2)
             }),
             getCooldown: (skill, p) => Math.max(5, 15 - skill.level * 0.5),
@@ -941,6 +1007,8 @@ export class SkillPreset {
                     skill.finish(p);
                 }
                 else if(skill.extras.timer > 0) {
+                    if(target instanceof LivingEntity) 
+                        target.addEffect(new Effect(EffectType.BIND, 1, skill.extras.timer, p));
                     skill.extras.absorbTimer -= Time.deltaTime;
                     if(skill.extras.absorbTimer <= 0) {
                         skill.extras.absorbTimer = 1;
@@ -1005,7 +1073,7 @@ export class SkillPreset {
             checkRealizeCondition: p => p.hadClass('그랜드 메이지'),
             calcValues: (skill, p) => ({
                 cost: 35 + skill.level * .5,
-                magicPenetrateIncrease: 3000 + skill.level * 800,
+                magicPenetrateIncrease: 3000 + skill.level * 800 + p.level * 20,
                 magicAttackIncrease: 25 + skill.level * 1.4,
                 profAddition: Math.max(1, 7 - skill.level * 0.2)
             }),
@@ -1064,7 +1132,7 @@ export class SkillPreset {
             maxLevel: 1,
             constants: {
                 defaultSpell: '아르 볼테 디스파르',
-                cooldown: 1.2
+                cooldown: 5
             },
             checkRealizeCondition: p => p.hadClass('그랜드 메이지'),
             getDescription: (skill, p) => ComponentBuilder.texts([
@@ -1089,6 +1157,7 @@ export class SkillPreset {
             ]),
             onEarlyUpdate(skill, p) {
                 if(!p.isAlive) return;
+                if(!skill.extras.cooldownMap) skill.extras.cooldownMap = {};
                 if(!skill.extras.foundSpells) 
                     skill.extras.foundSpells = [skill.getConstant('defaultSpell')];
                 if(!skill.extras.spellLog) 
@@ -1097,31 +1166,41 @@ export class SkillPreset {
                 const foundSpells: string[] = skill.extras.foundSpells;
                 const spellLog: [string, string][] = skill.extras.spellLog;
 
-                if(skill.extras.cooldown > 0) skill.extras.cooldown -= Time.deltaTime;
-
-                if (p.tickMessage && p.tickMessageId && spells.has(p.tickMessage)) {
-                    if(skill.extras.cooldown > 0) {
-                        p.sendRawMessage('[ 주문 재사용 대기시간이 지나지 않았습니다. ]');
-                    }
-                    else {
-                        p.user.room?.editChat(p.tickMessageId,
-                            ComponentBuilder.embed([
-                                ComponentBuilder.text(p.tickMessage, {
-                                    color: Utils.MAGIC_COLOR,
-                                })
-                            ], 'white')
-                        );
-                        spellLog.push([p.tickMessage, p.tickMessageId]);
-                        if(spellLog.length > 20) spellLog.shift();
+                for(let key in skill.extras.cooldownMap) {
+                    if(skill.extras.cooldownMap[key] > 0) {
+                        skill.extras.cooldownMap[key] -= Time.deltaTime;
                     }
                 }
 
-                const result = SpellCombination.runSpell(p, spellLog);
-                if(result !== false) {
-                    skill.extras.spellLog = [];
-                    skill.extras.cooldown = skill.getConstant('cooldown', 0);
-                    const spellName = spellLog.slice(-result).map(e => e[0]).join(' ');
-                    if(!foundSpells.includes(spellName)) foundSpells.push(spellName);
+                if (p.tickMessage && p.tickMessageId && spells.has(p.tickMessage)) {
+                    p.user.room?.editChat(p.tickMessageId,
+                        ComponentBuilder.embed([
+                            ComponentBuilder.text(p.tickMessage, {
+                                color: Utils.MAGIC_COLOR,
+                            })
+                        ], 'white')
+                    );
+                    spellLog.push([p.tickMessage, p.tickMessageId]);
+                    if(spellLog.length > 20) spellLog.shift();
+                }
+
+                let spellName = SpellCombination.getSpell(spellLog);
+                if(spellName) {
+                    let cool: number | undefined = skill.extras.cooldownMap[spellName];
+                    if(typeof cool == 'number' && cool > 0) {
+                        p.sendRawMessage(`[ 그 주문의 재사용 대기시간이 아직 ${cool.toFixed(0)}초 남았습니다! ]`);
+                        skill.extras.spellLog = [];
+                    }
+                    else {
+                        const result = SpellCombination.runSpell(p, spellLog);
+                        if(result !== false) {
+                            skill.extras.spellLog = [];
+                            skill.extras.cooldown = skill.getConstant('cooldown', 0);
+                            const spellName = spellLog.slice(-result).map(e => e[0]).join(' ');
+                            if(!foundSpells.includes(spellName)) foundSpells.push(spellName);
+                        }
+                        skill.extras.cooldownMap[spellName] = skill.getConstant('cooldown', 0);
+                    }
                 }
             },
         },
@@ -1211,7 +1290,7 @@ export class SkillPreset {
             maxLevel: 10,
             checkRealizeCondition: p => p.hadClass('나이트 세이드'),
             calcValues: (skill, p) => ({
-                effectLevel: skill.level,
+                effectLevel: skill.level + Math.floor(p.level / 200),
                 moveSpeedIncrease: skill.level * 3.5 + 20,
                 profAddition: Math.max(1, 3 - skill.level * 0.2)
             }),
@@ -1248,6 +1327,7 @@ export class SkillPreset {
             calcValues: (skill, p) => ({
                 effectLevel: skill.level,
                 moveSpeedIncrease: skill.level * 12 + 120,
+                moveSpeedAddition: p.level * 5,
                 defendPenetrateIncrease: skill.level * 120 + 220,
                 profAddition: Math.max(1, 3 - skill.level * 0.2)
             }),
@@ -1256,10 +1336,10 @@ export class SkillPreset {
             checkCondition: (skill, p) => p.isAlive && p.tickMessage === '백스텝!',
             getDescription: (skill, p) => ComponentBuilder.texts([
                 `4초 동안 ${AttributeType.MOVE_SPEED.asSubjective()} `,
-                ComponentBuilder.text(skill.getValue(p, 'moveSpeedIncrease').toFixed(1) + '%', { color: Utils.NUMBER_COLOR }),
+                ComponentBuilder.text(skill.getValue(p, 'moveSpeedAddition').toFixed(1) + ' + ' + skill.getValue(p, 'moveSpeedIncrease').toFixed(1) + '%', { color: Utils.NUMBER_COLOR }),
                 `, ${AttributeType.DEFEND_PENETRATE.asSubjective()} `,
                 ComponentBuilder.text(skill.getValue(p, 'defendPenetrateIncrease').toFixed(1), { color: Utils.NUMBER_COLOR }),
-                ` 증가하며, 그 동안 공격받을 시 잃은 생명력의 5%를 회복합니다.`
+                ` 증가하며, 그 동안 공격받을 시 잃은 생명력의 50%를 회복합니다.`
             ]),
             onStart(skill, p) {
                 skill.extras.timer = 4;
@@ -1269,9 +1349,10 @@ export class SkillPreset {
             onEarlyUpdate(skill, p) {
                 p.attribute.multiplyValue(AttributeType.MOVE_SPEED, skill.getValue(p, 'moveSpeedIncrease') / 100 + 1);
                 p.attribute.addValue(AttributeType.DEFEND_PENETRATE, skill.getValue(p, 'defendPenetrateIncrease'));
+                p.attribute.addValue(AttributeType.MOVE_SPEED, skill.getValue(p, 'moveSpeedAddition'));
                 p.registerTrigger(new Trigger({
                     onHitted(p, attacker) {
-                        p.heal((p.maxLife - p.life) * 0.05);
+                        p.heal((p.maxLife - p.life) * 0.5);
                     },
                 }))
                 if((skill.extras.timer -= Time.deltaTime) <= 0) {
@@ -1893,7 +1974,7 @@ export class SkillPreset {
             isPassive: true,
             maxLevel: 1,
             calcValues: (skill, p) => ({
-                rangeAttackIncrease: Math.floor(70 + Math.sqrt(p.level * 10))
+                rangeAttackIncrease: Math.floor(70 + p.level * 0.2)
             }),
             checkRealizeCondition: p => p.hadClass('래피딕 아처'),
             getDescription: (skill, p) => ComponentBuilder.texts([
@@ -2028,9 +2109,9 @@ export class SkillPreset {
             checkRealizeCondition: p => p.hadClass('궁수'),
             calcValues: (skill, p) => ({
                 cost: 30 + skill.level * 5,
-                increase: 75 + skill.level * 4,
+                increase: 75 + skill.level * 6,
                 count: Math.floor(3 + skill.level * 0.07),
-                effectLevel: skill.level * 2 + 4,
+                effectLevel: skill.level * 2 + 4 + Math.floor(p.level * 0.1),
                 profAddition: Math.max(1, 7 - skill.level * 0.2)
             }),
             getCooldown: (skill, p) => Math.max(5, 15 - skill.level * 1.5),
@@ -2086,11 +2167,11 @@ export class SkillPreset {
             checkRealizeCondition: p => p.hadClass('궁수'),
             calcValues: (skill, p) => ({
                 cost: 50 + skill.level * 5,
-                increase: 150 + skill.level * 9,
+                increase: 150 + skill.level * 9 + p.level * 0.2,
                 effectLevel: skill.level * 2 + 4,
                 profAddition: Math.max(1, 7 - skill.level * 0.2)
             }),
-            getCooldown: (skill, p) => Math.max(5, 15 - skill.level * 1.5),
+            getCooldown: (skill, p) => Math.max(3, 15 - skill.level * 1.5),
             getCostMessage: (skill, p) => `${Utils.toFixed(skill.getValue(p, 'cost'), 1)}마나`,
             getCostFailMessage: (skill, p) => '마나가 부족합니다.',
             canTakeCost: (skill, p) => p.mana >= skill.getValue(p, 'cost'),
@@ -2121,6 +2202,51 @@ export class SkillPreset {
                     onHit(_, victim) {
                         if(victim instanceof LivingEntity) 
                             victim.addEffect(new Effect(EffectType.FIRE, skill.getValue(p, 'effectLevel'), 30, p));
+                    },
+                });
+                projectile.attack(p.currentTarget, { useAbuserCritical: true });
+                skill.prof += skill.getValue(p, 'profAddition');
+            },
+        },
+        {
+            name: '페니트레이트',
+            isPassive: false,
+            maxLevel: 10,
+            checkRealizeCondition: p => 
+                p.hasSkill('백스텝', skill => skill.level >= skill.maxLevel) && 
+                p.hasSkill('스나이퍼 히트', skill => skill.level >= skill.maxLevel),
+            calcValues: (skill, p) => ({
+                cost: 50 + skill.level * 2.4,
+                moveSpeedCoeff: 150 + skill.level * 25,
+                rangeIncrease: 700 + skill.level * 30,
+                profAddition: Math.max(1, 5 - skill.level * 0.2)
+            }),
+            getCooldown: (skill, p) => Math.max(5, 35 - skill.level * 1.5),
+            getCostMessage: (skill, p) => `${Utils.toFixed(skill.getValue(p, 'cost'), 1)}마나`,
+            getCostFailMessage: (skill, p) => '마나가 부족합니다.',
+            canTakeCost: (skill, p) => p.mana >= skill.getValue(p, 'cost'),
+            takeCost: (skill, p) => p.mana -= skill.getValue(p, 'cost'),
+            getConditionMessage: (skill, p) => `목표물이 있고, 화살이 10개 이상 있고, 활을 들었을 때, 페니트레이트! 이라고 말하기`,
+            checkCondition: (skill, p) => p.isAlive && p.currentTarget !== null && p.tickMessage === '페니트레이트!' &&
+                p.inventory.hasItem(item => item.type === '화살', 10) &&
+                p.slot.hand?.type === '활',
+            getDescription: (skill, p) => ComponentBuilder.texts([
+                `화살을 10개 소모하여 목표물에게 ${AttributeType.RANGE_ATTACK.displayName}의 `,
+                ComponentBuilder.text(`${skill.getValue(p, 'rangeIncrease').toFixed(1)}%`, { color: Utils.PHYSICAL_COLOR }),
+                ` + ${AttributeType.MOVE_SPEED.displayName}의 ${skill.getValue(p, 'moveSpeedCoeff').toFixed(1)}%`,
+                `의 ${AttributeType.ATTACK.asObjective()} 가진 화살을 발사합니다.`
+            ]),
+            onStart(skill, p) {
+                if(!p.currentTarget) return;
+                p.inventory.removeItem(item => item.type === '화살', 10);
+
+                const projectile = new Projectile({ 
+                    name: '관통화살',
+                    owner: p,
+                    attributes: {
+                        attack: p.attribute.getValue(AttributeType.RANGE_ATTACK) * skill.getValue(p, 'rangeIncrease') / 100 + 
+                            p.attribute.getValue(AttributeType.MOVE_SPEED) * skill.getValue(p, 'moveSpeedCoeff') / 100,
+                        moveSpeed: p.attribute.getValue(AttributeType.PROJECTILE_SPEED)
                     },
                 });
                 projectile.attack(p.currentTarget, { useAbuserCritical: true });
@@ -2178,7 +2304,7 @@ export class SkillPreset {
             checkRealizeCondition: p => p.hadClass('궁수'),
             calcValues: (skill, p) => ({
                 cost: 30 + skill.level * 5,
-                increase: 260 + skill.level * 16,
+                increase: 260 + skill.level * 16 + p.level * 0.2,
                 effectLevel: skill.level * 2 + 4,
                 profAddition: Math.max(1, 7 - skill.level * 0.2)
             }),
@@ -2280,6 +2406,80 @@ export class SkillPreset {
                     const increase = skill.getValue(p, 'defendIncrease') / 100 + 1;
                     const addition = skill.getValue(p, 'defendAddition');
 
+                    p.attribute.multiplyValue(AttributeType.DEFEND, increase);
+                    p.attribute.multiplyValue(AttributeType.MAGIC_RESISTANCE, increase);
+                    p.attribute.addValue(AttributeType.DEFEND, addition);
+                    p.attribute.addValue(AttributeType.MAGIC_RESISTANCE, addition);
+                }
+            },
+        },
+        {
+            name: '굳건한 의지',
+            isPassive: false,
+            maxLevel: 13,
+            checkRealizeCondition: p => p.hadClass('전사'),
+            calcValues: (skill, p) => ({
+                time: 10 + skill.level * 0.1,
+                shield: 5000 + p.level * 54 * (skill.level * 0.195 + 1) + Math.pow(p.stat.getStat(StatType.STRENGTH), 1.2) * 300,
+                profAddition: Math.max(1, 4 - skill.level * 0.2)
+            }),
+            getCooldown: (skill, p) => Math.max(5, 35 - skill.level * 0.4),
+            getConditionMessage: (skill, p) => '굳건한 의지! 라고 말하기',
+            checkCondition: (skill, p) => p.isAlive && p.tickMessage === '굳건한 의지!',
+            getDescription: (skill, p) => ComponentBuilder.texts([
+                `${skill.getValue(p, 'time').toFixed(1)}초 동안 모든 피해를 방어하는 `,
+                ComponentBuilder.text(`${skill.getValue(p, 'shield').toFixed(1)}`, 
+                    { color: Utils.NUMBER_COLOR }),
+                ` 만큼의 보호막을 생성합니다.`
+            ]),
+            onStart(skill, p) {
+                p.addShield('determination', skill.getValue(p, 'shield'), skill.getValue(p, 'time'));
+                skill.prof += skill.getValue(p, 'profAddition');
+                p.sendMessage(ComponentBuilder.embed([
+                    ComponentBuilder.text('[ 굳건한 의지로 공격을 버팁니다! ]')
+                ], '#990000'));
+            },
+        },
+        {
+            name: '아이스 실드',
+            isPassive: false,
+            maxLevel: 20,
+            checkRealizeCondition: p => p.level >= 160 && p.hasSkill('아이스 볼트', skill => skill.level >= skill.maxLevel),
+            calcValues: (skill, p) => ({
+                cost: 105 + skill.level * 80,
+                time: 9 + skill.level * 0.2,
+                defendIncrease: 15 + skill.level * 5,
+                defendAddition: 20000 + skill.level * 677 + p.level * 50,
+                profAddition: Math.max(1, 4 - skill.level * 0.2)
+            }),
+            getCooldown: (skill, p) => Math.max(6, 30 - skill.level * 0.6),
+            getCostMessage: (skill, p) => `${Utils.toFixed(skill.getValue(p, 'cost'), 1)}마나`,
+            getCostFailMessage: (skill, p) => '마나가 부족합니다.',
+            canTakeCost: (skill, p) => p.mana >= skill.getValue(p, 'cost'),
+            takeCost: (skill, p) => p.mana -= skill.getValue(p, 'cost'),
+            getConditionMessage: (skill, p) => '아이스 실드! 라고 말하기',
+            checkCondition: (skill, p) => p.isAlive && p.tickMessage === '아이스 실드!',
+            getDescription: (skill, p) => ComponentBuilder.texts([
+                `${skill.getValue(p, 'time').toFixed(1)}초 동안 움직이지 못하는 대신`, 
+                `${AttributeType.MAGIC_RESISTANCE.asWith()} ${AttributeType.DEFEND.asSubjective()} `,
+                ComponentBuilder.text(`${skill.getValue(p, 'defendIncrease').toFixed(1)}% + ${skill.getValue(p, 'defendAddition').toFixed(1)}`, 
+                    { color: Utils.NUMBER_COLOR }),
+                ` 만큼 증가합니다.`
+            ]),
+            onStart(skill, p) {
+                skill.extras.timer = skill.getValue(p, 'time');
+                skill.prof += skill.getValue(p, 'profAddition');
+                p.sendMessage(ComponentBuilder.embed([
+                    ComponentBuilder.text('[ 얼음 방패가 당신을 보호합니다! ]')
+                ], '#9999ff'));
+            },
+            onUpdate(skill, p) {
+                if((skill.extras.timer -= Time.deltaTime) <= 0) skill.finish(p);
+                else {
+                    const increase = skill.getValue(p, 'defendIncrease') / 100 + 1;
+                    const addition = skill.getValue(p, 'defendAddition');
+
+                    p.setCannotMove('얼어붙었습니다.');
                     p.attribute.multiplyValue(AttributeType.DEFEND, increase);
                     p.attribute.multiplyValue(AttributeType.MAGIC_RESISTANCE, increase);
                     p.attribute.addValue(AttributeType.DEFEND, addition);
@@ -2465,7 +2665,7 @@ export class SkillPreset {
             name: '윈드 커터',
             isPassive: false,
             maxLevel: 20,
-            checkRealizeCondition: p => p.hadClass('마법사') && p.stat.getStat(StatType.SPELL) > 100,
+            checkRealizeCondition: p => p.hasSkill('파이어 볼', _ => true) && p.stat.getStat(StatType.SPELL) > 100,
             calcValues: (skill, p) => ({
                 cost: 150 + skill.level * 8,
                 increase: 130,
@@ -2513,7 +2713,7 @@ export class SkillPreset {
             name: '토네이도',
             isPassive: false,
             maxLevel: 20,
-            checkRealizeCondition: p => p.hadClass('마법사') && p.hasSkill('윈드 커터', s => s.level >= s.maxLevel * 0.8),
+            checkRealizeCondition: p => p.hasSkill('윈드 커터', s => s.level >= s.maxLevel * 0.8),
             calcValues: (skill, p) => ({
                 cost: 150 + skill.level * 8,
                 increase: 100,
@@ -2559,11 +2759,11 @@ export class SkillPreset {
         {
             name: '일렉트릭 쇼크',
             isPassive: false,
-            maxLevel: 15,
-            checkRealizeCondition: p => p.hadClass('마법사') && p.hasSkill('파이어 볼', s => s.level >= s.maxLevel),
+            maxLevel: 25,
+            checkRealizeCondition: p => p.hasSkill('파이어 볼', s => s.level >= s.maxLevel),
             calcValues: (skill, p) => ({
                 cost: 550 + skill.level * 18,
-                increase: 150,
+                increase: 150 + skill.level,
                 base: 653 + skill.level * 30,
                 effectTime: 2 + skill.level * 0.1,
                 profAddition: Math.max(1, 3.6 - skill.level * 0.1)
@@ -2607,7 +2807,7 @@ export class SkillPreset {
             name: '오버차지',
             isPassive: false,
             maxLevel: 15,
-            checkRealizeCondition: p => p.hadClass('마법사') && p.hasSkill('일렉트릭 쇼크', s => s.level >= s.maxLevel * 0.5),
+            checkRealizeCondition: p => p.hasSkill('일렉트릭 쇼크', s => s.level >= s.maxLevel * 0.5),
             calcValues: (skill, p) => ({
                 cost: 550 + skill.level * 18,
                 increase: 20,

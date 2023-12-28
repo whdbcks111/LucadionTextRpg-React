@@ -1,15 +1,18 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import './App.css';
 import ChatPage from './components/chat/ChatPage';
 import LoginPage from "./components/auth/LoginPage";
 import RegisterPage from "./components/auth/RegisterPage";
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import GoogleLogin from "./components/auth/social/GoogleLogin";
 import KakaoLogin from "./components/auth/social/KakaoLogin";
 import NamingPage from "./components/auth/NamingPage";
 import NaverLogin from "./components/auth/social/NaverLogin";
+import AdminPage from "./components/admin/AdminPage";
+import { SocketContext } from "./context/SocketContext";
 
 function App() {
+
     return (
         <div className='App'>
             <BrowserRouter>
@@ -24,6 +27,12 @@ function App() {
                         path="/register"
                         element={
                             <RegisterPage />
+                        }
+                    />
+                    <Route
+                        path="/admin"
+                        element={
+                            <AdminPage />
                         }
                     />
                     <Route

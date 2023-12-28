@@ -6,6 +6,7 @@ import { getKeywordAddAction, getKeywordChangeAction, getKeywordRemoveAction, ge
 import { NullableString, PingRoomData } from "../../types";
 import UserCount from "../message/UserCount";
 import Slider from "../util/Slider";
+import { useNavigate } from "react-router-dom";
 
 interface IProps {
     currentRoomName?: string;
@@ -13,10 +14,12 @@ interface IProps {
     isSlideMenuOpened: boolean;
     setSlideMenuOpened: React.Dispatch<React.SetStateAction<boolean>>;
     profilePic: NullableString;
+    isDev: boolean;
 }
 
-function ChatSlideMenu({ currentRoomName, rooms, isSlideMenuOpened, setSlideMenuOpened, profilePic }: IProps) {
+function ChatSlideMenu({ currentRoomName, rooms, isSlideMenuOpened, setSlideMenuOpened, profilePic, isDev }: IProps) {
 
+    const navigate = useNavigate();
     const profileImage = useRef<HTMLInputElement>(null);
     const socketClient = useContext(SocketContext);
     const options = useSelector<any, OptionState>(state => state.optionReducer);
@@ -87,6 +90,12 @@ function ChatSlideMenu({ currentRoomName, rooms, isSlideMenuOpened, setSlideMenu
                         backgroundImage: `url('/camera_icon.png')`
                     }} onClick={e => profileImage.current?.click() }/>
                 </div>
+                {
+                    isDev ?
+                    <div className="goto-admin-page-btn" onClick={() => navigate('/admin')}>
+                        관리자 페이지로 이동
+                    </div> : null
+                }
             </div>
             <div className='sub-title'>옵션</div>
             <div className='options'>

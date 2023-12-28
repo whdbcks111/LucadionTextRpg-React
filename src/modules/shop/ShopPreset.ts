@@ -665,6 +665,14 @@ export class ShopPreset {
                     count: 100
                 },
                 {
+                    name: '귀환의 서',
+                    cost: 20000,
+                    createItem: buyItem => {
+                        return Item.fromName(buyItem.name);
+                    },
+                    count: 5
+                },
+                {
                     name: '대 마법사용 안티매직 망토',
                     cost: 17000,
                     createItem: buyItem => {
@@ -795,6 +803,13 @@ export class ShopPreset {
                 },
                 {
                     name: '점액질',
+                    cost: 25,
+                    checkItem: (item, sellItem) => {
+                        return item.name === sellItem.name;
+                    }
+                },
+                {
+                    name: '실코라 껍질',
                     cost: 25,
                     checkItem: (item, sellItem) => {
                         return item.name === sellItem.name;

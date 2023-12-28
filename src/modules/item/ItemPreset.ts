@@ -1,5 +1,5 @@
 import { ItemPresetObject } from "../../types";
-import { AttributeModifier, EquipmentType, StatType, Utils } from "../Internal";
+import { AttributeModifier, EquipmentType, StatType, Utils, ZoneType } from "../Internal";
 import { AttributeType } from "../Internal";
 import { Item, Material, Effect, EffectType, Option } from "../Internal";
 
@@ -342,6 +342,13 @@ export class ItemPreset {
             onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND)
         },
         {
+            name: '활',
+            type: '활',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND),
+            attack: Item.BOW_ATTACK_EVENT
+        },
+        {
             name: '블러디 소드',
             type: '장검',
             maxCount: 1,
@@ -523,6 +530,19 @@ export class ItemPreset {
             durability: 3050
         },
         {
+            name: '망령의 두건',
+            type: '두건',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HEAD),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.DEFEND, 5540),
+                new AttributeModifier(true, AttributeType.MOVE_SPEED, 1.02),
+                new AttributeModifier(false, AttributeType.MAGIC_RESISTANCE, 13100),
+            ],
+            durability: 500,
+            requiredLevel: 2000
+        },
+        {
             name: '대 마법사용 안티매직 망토',
             type: '망토',
             maxCount: 1,
@@ -562,6 +582,19 @@ export class ItemPreset {
                 new AttributeModifier(false, AttributeType.DEFEND, 100),
                 new AttributeModifier(true, AttributeType.ATTACK, 1.2),
                 new AttributeModifier(true, AttributeType.MAX_LIFE, 0.9),
+            ],
+            durability: 1350
+        },
+        {
+            name: '소울 링',
+            type: '반지',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.ACCESSORY),
+            attributeModifiers: [
+                new AttributeModifier(true, AttributeType.HEAL_EFFICIENCY, 0.8),
+                new AttributeModifier(true, AttributeType.ATTACK, 1.25),
+                new AttributeModifier(true, AttributeType.MAGIC_ATTACK, 1.25),
+                new AttributeModifier(true, AttributeType.MAX_LIFE, 0.8),
             ],
             durability: 1350
         },
@@ -627,6 +660,19 @@ export class ItemPreset {
             ],
             durability: 3950,
             requiredLevel: 1255
+        },
+        {
+            name: '소울 슈즈',
+            type: '부츠',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.FEET),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.DEFEND, 20054),
+                new AttributeModifier(false, AttributeType.MOVE_SPEED, 1000),
+                new AttributeModifier(true, AttributeType.WATER_DEPLETE, 1.5),
+            ],
+            durability: 3950,
+            requiredLevel: 2555
         },
         {
             name: '독을 묻힌 단검',
@@ -752,6 +798,16 @@ export class ItemPreset {
             durability: 1334
         },
         {
+            name: '소형 아공간 저장고',
+            type: '가방',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.BACKPACK),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.INVENTORY_SPACE, 10),
+            ],
+            durability: 2334
+        },
+        {
             name: '금속 마법 지팡이',
             type: '지팡이',
             maxCount: 1,
@@ -819,6 +875,80 @@ export class ItemPreset {
                 new Option('독날', { level: 20, time: 1})
             ],
             requiredLevel: 1500
+        },
+        {
+            name: '메른토베아스',
+            type: '도끼',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.ATTACK, 45600),
+                new AttributeModifier(true, AttributeType.ATTACK, 1.16),
+                new AttributeModifier(true, AttributeType.HEAL_EFFICIENCY, 1.1),
+                new AttributeModifier(false, AttributeType.MAGIC_PENETRATE, 66600),
+                new AttributeModifier(true, AttributeType.FOOD_DEPLETE, 2.0)
+            ],
+            durability: 2345,
+            options: [
+                new Option('흑염', { level: 30, time: 2, chance: 0.2 })
+            ],
+            requiredLevel: 2500
+        },
+        {
+            name: '카오틱 데빌 소드',
+            type: '장검',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.ATTACK, 125600),
+                new AttributeModifier(true, AttributeType.ATTACK, 1.26),
+                new AttributeModifier(true, AttributeType.HEAL_EFFICIENCY, 0.9),
+                new AttributeModifier(false, AttributeType.CRITICAL_DAMAGE, 600),
+                new AttributeModifier(true, AttributeType.FOOD_DEPLETE, 3.0)
+            ],
+            durability: 1666,
+            options: [
+                new Option('흑염', { level: 30, time: 2, chance: 0.2 })
+            ],
+            requiredLevel: 4500
+        },
+        {
+            name: '카오틱 데빌 대거',
+            type: '단검',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.ATTACK, 125600),
+                new AttributeModifier(true, AttributeType.ATTACK, 1.26),
+                new AttributeModifier(true, AttributeType.ATTACK_SPEED, 1.16),
+                new AttributeModifier(true, AttributeType.HEAL_EFFICIENCY, 2),
+                new AttributeModifier(false, AttributeType.CRITICAL_CHANCE, 5),
+                new AttributeModifier(true, AttributeType.FOOD_DEPLETE, 3.0)
+            ],
+            durability: 1666,
+            options: [
+                new Option('흑염', { level: 30, time: 2, chance: 0.2 })
+            ],
+            requiredLevel: 4500
+        },
+        {
+            name: '카오틱 데빌 완드',
+            type: '지팡이',
+            maxCount: 1,
+            onUse: Item.EQUIP_USE_EVENT(EquipmentType.HAND),
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.MAGIC_ATTACK, 127877),
+                new AttributeModifier(true, AttributeType.MAGIC_PENETRATE, 1.56),
+                new AttributeModifier(false, AttributeType.MAGIC_PENETRATE, 20000),
+                new AttributeModifier(true, AttributeType.MAX_MANA, 0.95),
+                new AttributeModifier(false, AttributeType.CRITICAL_DAMAGE, 200),
+                new AttributeModifier(true, AttributeType.FOOD_DEPLETE, 2.0)
+            ],
+            durability: 1666,
+            options: [
+                new Option('라이프배리어', { life: 0.3, shield: 400000 })
+            ],
+            requiredLevel: 4500
         },
         {
             name: '몬크라스 대거',
@@ -1095,6 +1225,17 @@ export class ItemPreset {
             }
         },
         {
+            name: '로스트 플라워',
+            type: '식료',
+            maxCount: 5,
+            getDescription: () => '섭취시 20초 동안 Lv.100 화염 저항 효과가 생깁니다.',
+            onUse: (player, index) => {
+                player.sendRawMessage('[ 열에 무감각한 느낌이다.. ]');
+                player.addEffect(new Effect(EffectType.FIRE_RESISTANCE, 100, 20, player));
+                player.inventory.addItemCount(index, -1);
+            }
+        },
+        {
             name: '축복의 열매',
             type: '영약',
             maxCount: 5,
@@ -1113,6 +1254,20 @@ export class ItemPreset {
             onUse: (player, index) => {
                 player.realizeSkill('암전', true);
                 player.inventory.addItemCount(index, -1);
+            }
+        },
+        {
+            name: '귀환의 서',
+            type: '소모',
+            maxCount: 1,
+            getDescription: () => '소모할 시 자신의 스폰 포인트로 즉시 이동합니다. 중립 지역에서는 10초의 딜레이가 생깁니다.',
+            onUse: (player, index) => {
+                player.inventory.addItemCount(index, -1);
+                player.sendRawMessage('[ 귀환 중입니다...... ]');
+                player.inventory.delayTask(() => {
+                    player.sendRawMessage('[ 귀환 완료! ]');
+                    player.teleport(player.spawn);
+                }, player.getLocation().zoneType == ZoneType.NEUTRAL ? 10 * 1000 : 0);
             }
         },
         {
@@ -1143,6 +1298,11 @@ export class ItemPreset {
             name: '토끼의 발톱',
             type: '잡화',
             maxCount: 20
+        },
+        {
+            name: '실코라 껍질',
+            type: '잡화',
+            maxCount: 100
         },
         {
             name: '버려진 설계도',
@@ -1177,6 +1337,11 @@ export class ItemPreset {
             materials: [Material.STONE],
             type: '잡화',
             maxCount: 50,
+        },
+        {
+            name: '실',
+            type: '잡화',
+            maxCount: 500,
         },
         {
             name: '점액질',
@@ -1273,6 +1438,31 @@ export class ItemPreset {
             maxCount: 10
         },
         {
+            name: '고스타디움',
+            forgePrefix: '고스타티움',
+            onForge: (item, efficiency) => {
+                if(item.maxDurability) item.maxDurability *= 3.5;
+                if(item.durability) item.durability *= 3.5;
+                if(item.attributeModifiers.some(m => m.type === AttributeType.ATTACK)) 
+                    item.attributeModifiers.push(new AttributeModifier(true, AttributeType.ATTACK, 1.35));
+                if(item.attributeModifiers.some(m => m.type === AttributeType.DEFEND)) 
+                    item.attributeModifiers.push(new AttributeModifier(true, AttributeType.DEFEND, 1.15));
+                const moveSpeedModifiers = item.attributeModifiers.filter(m => m.type === AttributeType.MOVE_SPEED);
+                for(let moveSpeedModifier of moveSpeedModifiers) {
+                    if(moveSpeedModifier.isMultiplier) {
+                        if(moveSpeedModifier.value < 1) 
+                            moveSpeedModifier.value = Utils.lerp(moveSpeedModifier.value, 1, 0.9);
+                    }
+                    else {
+                        if(moveSpeedModifier.value < 0) 
+                            moveSpeedModifier.value = Utils.lerp(moveSpeedModifier.value, 0, 0.8);
+                    }
+                }
+            },
+            type: '단조',
+            maxCount: 10
+        },
+        {
             name: '장검 날',
             type: '잡화',
             attributeModifiers: [
@@ -1328,6 +1518,33 @@ export class ItemPreset {
                 if(efficiency > 5) {
                     item.attributeModifiers.push(new AttributeModifier(true, 
                         AttributeType.DEFEND_PENETRATE, 1 + Math.max(0, efficiency - 4.5) * 0.03));
+                }
+            },
+            durability: 650,
+            maxCount: 1
+        },
+        {
+            name: '활대',
+            type: '잡화',
+            attributeModifiers: [
+                new AttributeModifier(false, AttributeType.ATTACK, 100),
+                new AttributeModifier(false, AttributeType.RANGE_ATTACK, 350),
+                new AttributeModifier(false, AttributeType.DEFEND_PENETRATE, 500),
+                new AttributeModifier(true, AttributeType.ATTACK_SPEED, 1.05),
+                new AttributeModifier(false, AttributeType.PROJECTILE_SPEED, 1000),
+            ],
+            onForge: (item, efficiency) => {
+                item.attributeModifiers.push(new AttributeModifier(false, 
+                    AttributeType.RANGE_ATTACK, Math.max(0, efficiency - 1) * 160));
+                item.attributeModifiers.push(new AttributeModifier(false, 
+                    AttributeType.DEFEND_PENETRATE, Math.max(0, efficiency - 1) * 110));
+                item.attributeModifiers.push(new AttributeModifier(true, 
+                    AttributeType.ATTACK_SPEED, 1 + Math.max(0, efficiency - 1) * 0.005));
+                item.attributeModifiers.push(new AttributeModifier(false, 
+                    AttributeType.PROJECTILE_SPEED, Math.max(0, efficiency - 1) * 500));
+                if(efficiency > 10) {
+                    item.attributeModifiers.push(new AttributeModifier(false, 
+                        AttributeType.PROJECTILE_SPEED, 1 + Math.max(0, efficiency - 4.5) * 0.03));
                 }
             },
             durability: 650,
@@ -1449,6 +1666,11 @@ export class ItemPreset {
             maxCount: 20
         },
         {
+            name: '혼돈의 정수',
+            type: '잡화',
+            maxCount: 20
+        },
+        {
             name: '얼음 정수',
             type: '잡화',
             maxCount: 20
@@ -1467,6 +1689,25 @@ export class ItemPreset {
                 player.addEffect(new Effect(EffectType.MANA_REGENERATION, 20, 3 * 60));
                 player.inventory.addItemCount(index, -1);
                 player.sendRawMessage('[ 3분동안 Lv.10 마법 강화 효과와 Lv.20 마나 재생 효과가 지속됩니다. ]');
+            },
+            maxCount: 20
+        },
+        {
+            name: '데빌 로드 하트',
+            type: '소모',
+            getDescription: () => '섭취시 3분동안 Lv.10 마법 강화 효과와 Lv.20 생명력 재생 효과가 생깁니다.\n' + 
+                '최초 사용 시 모든 스탯이 영구적으로 10 증가합니다.',
+            onUse: (player, index) => {
+                player.addEffect(new Effect(EffectType.ENHANCE_MAGIC, 10, 3 * 60));
+                player.addEffect(new Effect(EffectType.REGENERATION, 20, 3 * 60));
+                player.inventory.addItemCount(index, -1);
+                player.sendRawMessage('[ 혼돈에 가득한 악마의 힘이 몸에 흘러들어온다.... ]');
+                if (player.log.getLog('devil_lord_heart') == 0) {
+                    for(let statType of StatType.getAll()) {
+                        player.stat.addStat(statType, 10);
+                    }
+                    player.log.addLog('devil_lord_heart', 1);
+                }
             },
             maxCount: 20
         },
@@ -1501,6 +1742,40 @@ export class ItemPreset {
                 player.inventory.addItemCount(index, -1);
             },
             maxCount: 1
+        },
+        {
+            name: '카오스 니즈',
+            type: '소모',
+            getDescription: () => '섭취시 몸이 1분동안 부패하며 영구적으로 ' + 
+                '감각 스탯이 15 증가합니다. 스탯 증가는 한 번만 적용됩니다.',
+            onUse: (player, index) => {
+                if (player.log.getLog('chaos_knees') == 0) {
+                    player.stat.addStat(StatType.SENSE, 15);
+                }
+                player.log.addLog('chaos_knees', 1);
+                player.addEffect(new Effect(EffectType.DECAY, 30, 60, player));
+                player.sendRawMessage('[ 혼돈의 기운이 일어나 당신의 몸에 흡수되었다. ]');
+                player.inventory.addItemCount(index, -1);
+            },
+            maxCount: 1,
+            requiredLevel: 2000
+        },
+        {
+            name: '다크 혼즈',
+            type: '소모',
+            getDescription: () => '섭취시 1분동안 기절하며 영구적으로 ' + 
+                '민첩 스탯이 15 증가합니다. 스탯 증가는 한 번만 적용됩니다.',
+            onUse: (player, index) => {
+                if (player.log.getLog('dark_horns') == 0) {
+                    player.stat.addStat(StatType.AGILITY, 15);
+                }
+                player.log.addLog('dark_horns', 1);
+                player.addEffect(new Effect(EffectType.STUN, 1, 60, player));
+                player.sendRawMessage('[ 어두운 기운이 일어나 당신의 몸에 흡수되었다. ]');
+                player.inventory.addItemCount(index, -1);
+            },
+            maxCount: 1,
+            requiredLevel: 2000
         },
         {
             name: '그레모리스 하트',

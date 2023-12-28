@@ -215,7 +215,7 @@ export class EffectType extends Enum {
 
     static BIND =
         new EffectType('bind', '속박', (effect, living) => {
-            living.setCannotUseSkill(effect.type.displayName + '에 걸린 상태입니다.');
+            living.setCannotMove(effect.type.displayName + '에 걸린 상태입니다.');
         }).setDebuff();
 
     static INVULNERABLE =

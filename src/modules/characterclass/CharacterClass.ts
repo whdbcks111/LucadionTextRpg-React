@@ -67,16 +67,16 @@ export class CharacterClass {
             .setEnhancedClassName('광전사'),
 
         new CharacterClass('광전사', 
-            `${Utils.asSubjective(AttributeType.MAX_LIFE.displayName)} 45% 증가합니다.\n` +
+            `${Utils.asSubjective(AttributeType.MAX_LIFE.displayName)} 38% 증가합니다.\n` +
             `또한 잃은 생명력에 비례해서 ${
-                Utils.asSubjective(AttributeType.ATTACK.displayName)} 최소 20% ~ 최대 60%까지 증가합니다.`, p => {})
+                Utils.asSubjective(AttributeType.ATTACK.displayName)} 80%까지 증가합니다.`, p => {})
             .setCanChangeClass(p => (
                 p.stat.getStat(StatType.STRENGTH) >= 200 && p.stat.getStat(StatType.VITALITY) >= 200
             ))
             .setTrigger(new Trigger({
                 onUpdate(p) {
-                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.45);
-                    p.attribute.multiplyValue(AttributeType.ATTACK, 1.2 + 0.4 * ((p.maxLife - p.life) / p.maxLife));
+                    p.attribute.multiplyValue(AttributeType.MAX_LIFE, 1.38);
+                    p.attribute.multiplyValue(AttributeType.ATTACK, 1 + 0.8 * ((p.maxLife - p.life) / p.maxLife));
                 }
             })),
 
@@ -92,12 +92,12 @@ export class CharacterClass {
             .setEnhancedClassName('나이트 세이드'),
 
         new CharacterClass('나이트 세이드', 
-            `${AttributeType.MOVE_SPEED.asSubjective()} 16% 증가합니다. 또한 민첩 스탯에 비례해서 ` + 
+            `${AttributeType.MOVE_SPEED.asSubjective()} 26% 증가합니다. 또한 민첩 스탯에 비례해서 ` + 
             `${AttributeType.DEFEND_PENETRATE.asSubjective()} 증가합니다.`, p => {})
             .setTrigger(new Trigger({
                 onUpdate(p) {
-                    p.attribute.multiplyValue(AttributeType.MOVE_SPEED, 1.16);
-                    p.attribute.addValue(AttributeType.DEFEND_PENETRATE, p.stat.getStat(StatType.AGILITY) * 8);
+                    p.attribute.multiplyValue(AttributeType.MOVE_SPEED, 1.26);
+                    p.attribute.addValue(AttributeType.DEFEND_PENETRATE, p.stat.getStat(StatType.AGILITY) * 30);
                 },
             }))
             .setCanChangeClass(p => (

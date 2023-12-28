@@ -31,7 +31,7 @@ function ChatPage() {
         imageUploadInput = useRef<HTMLInputElement>(null);
     const prevChatCount = useRef(0);
     const prevRoomId = useRef('');
-    const [pingData, setPingData] = useState<ServerPingData>({}); 
+    const [pingData, setPingData] = useState<ServerPingData>({});
     const [isSlideMenuOpened, setSlideMenuOpened] = useState(false);
     const prevChatHeight = useRef(0);
     const prevSendMessages = useRef<string[]>([]);
@@ -96,6 +96,16 @@ function ChatPage() {
     const hideFullMessage = useCallback(() => {
         setFullChat(null);
     }, []);
+
+    useEffect(() => {
+        socketClient.on('navigate', path => {
+            navigate(path);
+        });
+
+        return () => {
+            socketClient.off('navigate');
+        }
+    });
 
     useEffect(() => {
         socketClient.emit('reset-ping');
@@ -537,6 +547,7 @@ function ChatPage() {
                 <div className='chat-send' onClick={send}>전송</div>
             </div>
             <ChatSlideMenu
+                isDev={pingData?.isDev ?? false}
                 isSlideMenuOpened={isSlideMenuOpened} setSlideMenuOpened={setSlideMenuOpened} 
                 currentRoomName={pingData?.currentRoomName} rooms={pingData?.rooms}
                 profilePic={pingData?.profilePic ?? null} />

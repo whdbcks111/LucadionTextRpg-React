@@ -35,6 +35,7 @@ export class Player extends LivingEntity {
     tickMessage: NullableString = null;
     tickMessageId: NullableString = null;
     oneTimeTriggers: Trigger[] = [];
+    nextOneTimeTriggers: Trigger[] = [];
 
     actionBars: [string, MessageComponent, number][] = [];
 
@@ -86,41 +87,51 @@ export class Player extends LivingEntity {
             this.statPoint += (level - this.level) * 3;
             this.level = level;
         }
-        else if(level < this.level) {
-            const point = (this.level - level) * 3;
-            let remainPoint = point;
-            this.level = level;
-            if(this.statPoint > remainPoint) this.statPoint -= remainPoint;
-            else {
+        else if(level < this.level) { //레벨 다운일때
+            const point = (this.level - level) * 3; //줄어야 하는 스탯 포인트
+            let remainPoint = point; //현재 남은 줄어야 하는 스탯포인트
+            this.level = level; 
+            if(this.statPoint > remainPoint) { // 남은 포인트보다 현재 잔여 스탯포인트가 더 높을 시 잔여에서 가져감.
+                this.statPoint -= remainPoint;
+            }
+            else { //잔여 스탯포인트가 부족할 시
+                
+                //일단 잔여 스탯포인트에서 최대한 가져감.
                 remainPoint -= this.statPoint;
                 this.statPoint = 0;
 
+                // 현재 전체 찍은 스탯 개수를 구함
                 const types = StatType.getAll();
                 let totalStat = 0;
                 for(let type of types)
                     totalStat += this.stat.getStat(type);
 
-                for(let type of types) {
-                    const amount = Math.round(point * (this.stat.getStat(type) / Math.max(1, totalStat)));
-                    this.stat.addStat(type, -amount);
-                    remainPoint -= amount;
-                }
+                if(totalStat > 0) { // 뺄 스탯이 있을 때만 실행
 
-                if(remainPoint <= 0) this.stat.addStat(StatType.VITALITY, -remainPoint);
-                else {
-                    let i = 0, save = true;
+                    let initRemainPoint = remainPoint;
+                    // 전체 스탯 개수에서 가지고 있는 비율만큼 빼고나서                
+                    for(let i = 0; i < types.length; i++) {
+                        const type = types[i];
+                        const amount = Math.min(remainPoint, Math.round(initRemainPoint * (this.stat.getStat(type) / totalStat)));
+                        this.stat.addStat(type, -amount);
+                        remainPoint -= amount;
+                    }
+    
+                    // 남은 빼야할 스탯은 로테이션으로 돌아가면서 1씩 뺌
+                    let i = 0, hasRemainStat = true;
                     while(remainPoint > 0) {
                         if(i % types.length === 0) {
-                            if(!save) break;
-                            save = false;
+                            if(!hasRemainStat) break;
+                            hasRemainStat = false;
                         }
                         let type = types[i++ % types.length];
                         if(this.stat.getStat(type) > 0) {
                             this.stat.addStat(type, -1);
-                            save = true;
+                            hasRemainStat = true;
                             remainPoint--;
                         }
                     }
+
                 }
             }
             this.exp = this.maxExp * expRatio;
@@ -135,7 +146,7 @@ export class Player extends LivingEntity {
     }
 
     registerTrigger(trigger: Trigger) {
-        this.oneTimeTriggers.push(trigger);
+        this.nextOneTimeTriggers.push(trigger);
     }
 
     breakEquipItem(type: EquipmentType) {
@@ -341,7 +352,7 @@ export class Player extends LivingEntity {
         if(this.level < 5) defaultTime = 10;
         else if(this.level < 10) defaultTime = 30;
         else if(this.level < 20) defaultTime = 60;
-        else defaultTime = 60 * 5;
+        else defaultTime = 60 * 2;
       
         let notoriousAddition = Math.min(Math.pow(this.karma, 1.5) / 10, 3600 * 12) + (this.karma > 0 ? 60 * 5: 0);
       
@@ -391,12 +402,12 @@ export class Player extends LivingEntity {
             
         if(applyDeathPenalty) {
             let beforeLv = this.level;
-            this.exp -= this.maxExp * 0.22;
+            this.exp -= this.maxExp * 0.12;
 
             if(this.latestAbuser instanceof Monster) {
                 let monster = this.latestAbuser as Monster;
                 if(monster.level > this.level) {
-                    this.exp -= this.maxExp * (0.2 + 2 * (monster.level / this.level - 1));
+                    this.exp -= this.maxExp * (0.2 + 4 * (monster.level / this.level - 1));
                 }
             }
 
@@ -425,7 +436,7 @@ export class Player extends LivingEntity {
     }
 
     getSkillInfo(name: string) {
-        this.getSkill(name)?.getSkillInfo(this) ?? null;
+        return this.getSkill(name)?.getSkillInfo(this) ?? null;
     }
 
     getSkillListInfo() {
@@ -713,7 +724,8 @@ export class Player extends LivingEntity {
         this.tickMessage = null;
         this.tickMessageId = null;
 
-        this.oneTimeTriggers = [];
+        this.oneTimeTriggers = this.nextOneTimeTriggers;
+        this.nextOneTimeTriggers = [];
     }
 
     hasSkill(name: string, cond: (skill: Skill) => boolean) {

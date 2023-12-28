@@ -49,7 +49,7 @@ export class CraftRecipe {
         item.options = baseItem?.options ?? [];
         item.extras = baseItem?.extras ?? {};
         item.requiredLevel = baseItem?.requiredLevel ?? null;
-        p.inventory.removeItem(i => i.name === form.itemName, 1);
+        p.inventory.removeItem(i => i === baseItem, 1);
         result.push(new ItemStack(item, 1));
 
         postprocess(p);
@@ -131,6 +131,12 @@ export class CraftRecipe {
           CraftRecipe.convertForgedItem(MetalForgeForm.GREAT_SWORD, '대검', p => {
             p.inventory.removeItem(i => i.name === '나무 막대기', 1);
             p.inventory.removeItem(i => i.includesMaterial(Material.GLUE), 1);
+          })
+        ),
+        new CraftRecipe('활', '활대 1개, 실 1개',
+          p => p.inventory.hasItem(i => i.name === '실', 1) && p.inventory.hasItem(i => i.name === '활대', 1),
+          CraftRecipe.convertForgedItem(MetalForgeForm.BOW, '활', p => {
+            p.inventory.removeItem(i => i.name === '실', 1);
           })
         ),
         new CraftRecipe('도끼', '나무 막대기 1개, 접착제 재질 아이템 1개, 도끼 날 1개',

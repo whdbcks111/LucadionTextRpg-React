@@ -14,7 +14,7 @@ export class Utils {
     static readonly NUMBER_COLOR = '#4AC3A3';
     static readonly PHYSICAL_COLOR = '#FF9B2C';
     static readonly MAGIC_COLOR = '#773AFF';
-    static readonly PREFIX = '::';
+    static readonly PREFIX = '/';
 
     static pick<T>(arr: T[]) {
         return arr[Math.floor(Math.random() * arr.length)];

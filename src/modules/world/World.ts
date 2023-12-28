@@ -835,8 +835,278 @@ export class World {
         new Location('마계 - 흑염의 미로 - 50', 0, -100, 2700, {
             regionType: RegionType.DEVILDOM,
             zoneType: ZoneType.NEUTRAL,
-            getMovable: loc => ['마계 - 흑염의 미로 - 46'],
+            getMovable: loc => ['마계 - 흑염의 미로 - 46', '마계 - 데스 로드'],
             objects: ([Monster.fromName('더 다크나이트 로드')] as Lootable[]).concat(Utils.repeat(() => Resource.fromName('블러드 크리스탈'), 3))
+        }),
+        new Location('마계 - 데스 로드', -300, -100, 2700, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 흑염의 미로 - 50', '마계 - 마왕성 1층 - 1'],
+            objects: []
+        }),
+        new Location('마계 - 마왕성 1층 - 1', -666, 0, 3000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 흑염의 미로 - 50', '마계 - 마왕성 1층 - 2'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+            )
+        }),
+        new Location('마계 - 마왕성 1층 - 2', -666, 0, 3500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 1층 - 1', '마계 - 마왕성 1층 - 3'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('암흑 방패단'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 1층 - 3', -666, 0, 4000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 1층 - 2', '마계 - 마왕성 1층 - 4'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1)
+            )
+        }),
+        new Location('마계 - 마왕성 1층 - 4', -666, 0, 4500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 1층 - 3', '마계 - 마왕성 1층 - 5'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 1층 - 5', -666, 0, 5500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 1층 - 4', '마계 - 마왕성 1층 - 6'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('암흑 방패단'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 1층 - 6', -666, 0, 6666, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 1층 - 5', '마계 - 마왕성 2층 - 1'],
+            terrains: [Terrain.fromId('shadow_box')],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 3)
+            )
+        }),
+        new Location('마계 - 마왕성 2층 - 1', -666, 13, 6666, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 1층 - 6', '마계 - 마왕성 2층 - 2'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 2층 - 2', -666, 13, 6000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 2층 - 1', '마계 - 마왕성 2층 - 3'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('암흑 방패단'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 2층 - 3', -666, 13, 5500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 2층 - 2', '마계 - 마왕성 2층 - 4'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 3)
+            )
+        }),
+        new Location('마계 - 마왕성 2층 - 4', -666, 13, 5000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 2층 - 3', '마계 - 마왕성 2층 - 5'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+            )
+        }),
+        new Location('마계 - 마왕성 2층 - 5', -666, 13, 4500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 2층 - 4', '마계 - 마왕성 2층 - 6'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 2)
+            )
+        }),
+        new Location('마계 - 마왕성 2층 - 6', -666, 13, 4000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 2층 - 5', '마계 - 마왕성 3층 - 1'],
+            terrains: [Terrain.fromId('shadow_box')],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 2))
+            )
+        }),
+        new Location('마계 - 마왕성 3층 - 1', -666, 26, 4000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 2층 - 6', '마계 - 마왕성 3층 - 2'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('암흑 방패단'), 1)
+            )
+        }),
+        new Location('마계 - 마왕성 3층 - 2', -666, 26, 4500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 3층 - 1', '마계 - 마왕성 3층 - 3'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('암흑 방패단'), 2))
+            )
+        }),
+        new Location('마계 - 마왕성 3층 - 3', -666, 26, 5000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 3층 - 2', '마계 - 마왕성 3층 - 4'],
+            terrains: [Terrain.fromId('shadow_box')],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 2))
+            )
+        }),
+        new Location('마계 - 마왕성 3층 - 4', -666, 26, 5500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 3층 - 3', '마계 - 마왕성 3층 - 5'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 3)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 3층 - 5', -666, 26, 6000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 3층 - 4', '마계 - 마왕성 3층 - 6'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 2)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 2))
+            )
+        }),
+        new Location('마계 - 마왕성 3층 - 6', -666, 26, 6666, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 3층 - 5', '마계 - 마왕성 4층 - 1'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 4층 - 1', -666, 40, 6666, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 3층 - 6', '마계 - 마왕성 4층 - 2'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 2)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 2))
+            )
+        }),
+        new Location('마계 - 마왕성 4층 - 2', -666, 40, 6000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 4층 - 1', '마계 - 마왕성 4층 - 3'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('암흑 방패단'), 2)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 주술사'), 3))
+            )
+        }),
+        new Location('마계 - 마왕성 4층 - 3', -666, 40, 5500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 4층 - 2', '마계 - 마왕성 4층 - 코어'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('마족 암흑전사'), 6)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 1))
+            )
+        }),
+        new Location('마계 - 마왕성 4층 - 코어', -666, 40, 5000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 4층 - 3', '마계 - 마왕성 4층 - 5'],
+            objects: ([Monster.fromName('데빌 코어')]).concat(Utils.repeat(() => Monster.fromName('마족 주술사'), 3))
+        }),
+        new Location('마계 - 마왕성 4층 - 5', -666, 40, 4500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 4층 - 코어', '마계 - 마왕성 4층 - 6'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 4))
+            )
+        }),
+        new Location('마계 - 마왕성 4층 - 6', -666, 40, 4000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 4층 - 5', '마계 - 마왕성 5층 - 1'],
+            objects: []
+        }),
+        new Location('마계 - 마왕성 5층 - 1', -666, 53, 4000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 4층 - 6', '마계 - 마왕성 5층 - 2'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 3)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 2))
+            )
+        }),
+        new Location('마계 - 마왕성 5층 - 2', -666, 53, 4500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 5층 - 1', '마계 - 마왕성 5층 - 3'],
+            objects: [],
+            terrains: [Terrain.fromId('shadow_box')],
+        }),
+        new Location('마계 - 마왕성 5층 - 3', -666, 53, 5000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 5층 - 2', '마계 - 마왕성 5층 - 4'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 2)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 3))
+            )
+        }),
+        new Location('마계 - 마왕성 5층 - 4', -666, 53, 5500, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 5층 - 3', '마계 - 마왕성 5층 - 5'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 1)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 고위 주술사'), 5))
+            )
+        }),
+        new Location('마계 - 마왕성 5층 - 5', -666, 53, 6000, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 5층 - 4', '마계 - 마왕성 5층 - 6'],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('암흑 방패단'), 5)
+            )
+        }),
+        new Location('마계 - 마왕성 5층 - 6', -666, 53, 6666, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 5층 - 5', '마계 - 마왕성 최상층'],
+            terrains: [Terrain.fromId('shadow_box')],
+            objects: Utils.shuffle(
+                Utils.repeat(() => Monster.fromName('광폭 마족 전사'), 3)
+                    .concat(Utils.repeat(() => Monster.fromName('마족 주술사'), 3))
+            )
+        }),
+        new Location('마계 - 마왕성 최상층', -666, 66, 6666, {
+            regionType: RegionType.DEVILDOM,
+            zoneType: ZoneType.NEUTRAL,
+            getMovable: loc => ['마계 - 마왕성 5층 - 6'],
+            objects: [Monster.fromName('메른베화스 더 데빌 로드'), Resource.fromName('카오스 크리스탈'), Resource.fromName('카오스 크리스탈')]
         }),
         new Location('보르스트 마을', -2200, 7, 1600, {
             getMovable: loc => ['눈이 덮인 언덕 - 1', '레플린의 마법 상점', '볼렌 여관', '우로드 잡화점', '피산의 낚시상점', '코르코르 늪 - 1', '얼어붙은 낚시터'],
@@ -1044,6 +1314,7 @@ export class World {
         new Location('대련장', 0, 0, 0, {
             getMovable: loc => ['새터스 마을'],
             objects: Utils.repeat(() => Monster.fromName('허수아비'), 10)
+                .concat(Utils.repeat(() => Monster.fromName('강철 허수아비'), 4))
                 .concat(Utils.repeat(() => Monster.fromName('연습용 인형'), 4)),
             zoneType: ZoneType.NORMAL
         }),
